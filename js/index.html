@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title></title>
+  <link rel="stylesheet" type="text/css" href="dest/css/style.css" />
+  <script src="dest/js/audio.js"></script>
+</head>
+<body>
+  <div class="settings" id="js-settings">
+    <div>
+      開始番号<br>
+      <select id="js-selectNum"></select>
+    </div>
+    <div>
+      繰り返し回数<br>
+      <select id="js-selectRepeat"></select>回<br><small>※「1回」＝繰り返し無し</small>
+    </div>
+    <div>
+      開始スピード<br>
+      <select id="js-selectSpeed"></select>秒
+    </div>
+    <div>
+      加速<br>
+      <select id="js-selectAcceleration"></select>秒
+    </div>
+    <div>
+      パス<br>
+      <input type="text" id="js-inputPath">
+    </div>
+    <div>
+      ファイル名<br>
+      連番の桁数<select id="js-selectDigit"></select>桁<br>
+      <input type="text" id="js-inputFileName1">1
+      <input type="text" id="js-inputFileName2">
+      .mp3
+    </div>
+  </div>
+  <button id="js-btn">設定して再生する</button>
+  <div id="js-show"></div>
+  <div class="disp--none">
+    <video id="js-video" playsinline autoplay controls></video>
+  </div>
+</body>
+</html>
