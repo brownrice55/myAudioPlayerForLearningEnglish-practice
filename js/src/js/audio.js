@@ -21,6 +21,7 @@
     this.videoElm = document.getElementById('js-video');
     this.showElm = document.getElementById('js-show');
     this.btnElm = document.getElementById('js-btn');
+    this.showNumElm = document.getElementById('js-showNum');
 
     this.path = this.settingsData.path || '';
     this.digit = this.settingsData.digit || 1;
@@ -32,6 +33,7 @@
     this.repeat = this.settingsData.repeat || 1;
     this.acceleration = this.settingsData.acceleration || 0;
     this.speedInit = this.settingsData.speed || 1;
+    this.showNumElm.innerHTML = this.num;
   };
 
   AudioPlayer.prototype.getOption = function(aMin,aMax,aPlus) {
@@ -68,7 +70,13 @@
   AudioPlayer.prototype.saveSettings = function(aNum, aRepeat, aSpeedInit, aAcceleration, aPath, aDigit, aFileName1, aFileName2) {
     let data = { no:aNum, repeat:aRepeat, speed:aSpeedInit, acceleration: aAcceleration, path:aPath, digit: aDigit, filename1:aFileName1, filename2:aFileName2};
     localStorage.setItem('settingsData', JSON.stringify(data));
-  }
+  };
+
+  AudioPlayer.prototype.setShowNum = function() {    
+    this.digit = this.settingsSelectDigitElm.value;
+    this.num = this.settingsSelectNumElm.value;
+    this.showNumElm.innerHTML = this.getSerialNumber();
+  };
 
   AudioPlayer.prototype.setNum = function(e) {
     if(this.isSettingsOpen) {//set Settings
@@ -101,12 +109,16 @@
     }
   };
 
-  AudioPlayer.prototype.setPath = function() {
+  AudioPlayer.prototype.getSerialNumber = function() {
     let digitZero = '';
     for(let cnt=0;cnt<this.digit;++cnt) {
       digitZero += '0';
     }
-    let serialNumber = (digitZero + this.num).slice(-this.digit);
+    return (digitZero + this.num).slice(-this.digit);
+  };
+
+  AudioPlayer.prototype.setPath = function() {
+    let serialNumber = this.getSerialNumber();
     let path = this.path + this.fileName1 + serialNumber + this.fileName2 + '.mp3';
     this.videoElm.innerHTML = '<source src="' + path + '" type="video/mp4">';
   };
@@ -125,7 +137,6 @@
       videoElm.pause();
     }
     else {
-      console.log(this.speed);  
       if(this.cnt>=this.repeat-1) {
         ++this.num;
         this.speed = this.speedInit;
@@ -145,6 +156,7 @@
   AudioPlayer.prototype.setEvent = function() {
     this.setOption();
     this.setValue();
+    this.settingsSelectDigitElm.addEventListener('change', this.setShowNum.bind(this));
     this.btnElm.addEventListener('click', this.setNum.bind(this));
   };
 
