@@ -1,6 +1,33 @@
-    select {
-      padding: 4px 10px;
-    }
-    .disp--none {
-      display: none;
-    }
+.disp--none {
+  display: none;
+}
+.settings {
+  dl {
+    width: 100%;
+    margin: 0 auto 20px;
+    display: flex;
+    flex-wrap: wrap;
+    text-align: left;
+  }
+  dt {
+    width: 32%;
+    margin: 0;
+    padding: 2%;
+    border-bottom: 1px solid #ccc;
+    line-height: 1.8;
+    float: left;
+  }
+  dd {
+    width: 60%;
+    margin: 0;
+    padding: 2%;
+    border-bottom: 1px solid #ccc;
+    line-height: 1.8;
+    float: right;
+  }
+  select {
+    padding: 4px 10px;
+    margin: 0 4px 0 0;
+    width: 80px;
+  }
+}

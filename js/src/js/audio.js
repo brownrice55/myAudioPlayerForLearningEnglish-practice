@@ -9,19 +9,26 @@
   AudioPlayer.prototype.initialize = function() {
     this.settingsData = JSON.parse(localStorage.getItem('settingsData')) || [];
     this.isSettingsOpen = true;
-    this.settingsElm = document.getElementById('js-settings');
-    this.settingsSelectNumElm = document.getElementById('js-selectNum');
-    this.settingsSelectSpeedElm = document.getElementById('js-selectSpeed');
-    this.settingsSelectAccelerationElm = document.getElementById('js-selectAcceleration');
-    this.settingsSelectRepeatElm = document.getElementById('js-selectRepeat');
-    this.settingsInputPathElm = document.getElementById('js-inputPath');
-    this.settingsSelectDigitElm = document.getElementById('js-selectDigit');
-    this.settingsInputFileName1Elm = document.getElementById('js-inputFileName1');
-    this.settingsInputFileName2Elm = document.getElementById('js-inputFileName2');
-    this.videoElm = document.getElementById('js-video');
-    this.showElm = document.getElementById('js-show');
-    this.btnElm = document.getElementById('js-btn');
-    this.showNumElm = document.getElementById('js-showNum');
+    this.settingsElm = document.querySelector('.js-settings');
+    this.settingsRadioElm = this.settingsElm.querySelectorAll('input[type="radio"]');
+
+    this.settingsSelectElm = this.settingsElm.querySelectorAll('select');
+    this.settingsSelectNumElm = this.settingsSelectElm[0];
+    this.settingsSelectRepeatElm = this.settingsSelectElm[1];
+    this.settingsSelectSpeedElm = this.settingsSelectElm[2];
+    this.settingsSelectAccelerationElm = this.settingsSelectElm[3];
+    this.settingsSelectDigitElm = this.settingsSelectElm[4];
+
+    this.settingsTextElm = this.settingsElm.querySelectorAll('input[type="text"]');
+    this.settingsInputNumElm = this.settingsTextElm[0];
+    this.settingsInputPathElm = this.settingsTextElm[1];
+    this.settingsInputFileName1Elm = this.settingsTextElm[2];
+    this.settingsInputFileName2Elm = this.settingsTextElm[3];
+
+    this.showElm = document.querySelector('.js-show');
+    this.videoElm = document.querySelector('.js-video');
+    this.btnElm = document.querySelector('.js-btn');
+    this.showNumElm = this.settingsInputFileName1Elm.nextSibling;
 
     this.path = this.settingsData.path || '';
     this.digit = this.settingsData.digit || 1;
@@ -61,6 +68,19 @@
     this.settingsSelectDigitElm.value = this.digit;
     this.settingsInputFileName1Elm.value = this.fileName1;
     this.settingsInputFileName2Elm.value = this.fileName2;
+  };
+
+  AudioPlayer.prototype.selectType = function(e) {
+    let index = e.target.dataset.index;
+    let showInputRadioElms = document.querySelectorAll('.js-showInputRadio');
+    showInputRadioElms.forEach((elm) => {
+      if(elm.dataset.index===index) {
+        elm.classList.remove('disp--none');
+      }
+      else {
+        elm.classList.add('disp--none');
+      }
+    });
   };
 
   AudioPlayer.prototype.getShowElm = function() {
@@ -157,7 +177,13 @@
     this.setOption();
     this.setValue();
     this.settingsSelectDigitElm.addEventListener('change', this.setShowNum.bind(this));
+    this.settingsSelectNumElm.addEventListener('change', this.setShowNum.bind(this));
     this.btnElm.addEventListener('click', this.setNum.bind(this));
+    this.settingsRadioElm.forEach((elm) => {
+      if(elm) {
+        elm.addEventListener('change', this.selectType.bind(elm));
+      }
+    });
   };
 
   AudioPlayer.prototype.run = function() {
