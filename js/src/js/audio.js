@@ -74,24 +74,20 @@
     this.settingsInputFileName1Elm.value = this.fileName1;
     this.settingsInputFileName2Elm.value = this.fileName2;
 
-    let indexArray = (this.numType===1) ? [0,1]: [1,0];
+    this.setDisplayNone();
+  };
+
+  AudioPlayer.prototype.setDisplayNone = function() {
+    let indexArray = (this.numType===1) ? [0,1] : [1,0];
     this.settingsRadioElm[indexArray[0]].checked = true;
     this.settingsRadioElm[indexArray[1]].checked = false;
     this.settingsShowInputRadioElm[indexArray[0]].classList.remove('disp--none');
     this.settingsShowInputRadioElm[indexArray[1]].classList.add('disp--none');
   };
 
-  AudioPlayer.prototype.selectType = function(e) {
-    let index = e.target.value;
-    let showInputRadioElms = document.querySelectorAll('.js-showInputRadio');
-    showInputRadioElms.forEach((elm) => {
-      if(elm.dataset.index===index) {
-        elm.classList.remove('disp--none');
-      }
-      else {
-        elm.classList.add('disp--none');
-      }
-    });
+  AudioPlayer.prototype.selectType = function(aCnt) {
+    this.numType = aCnt+1;
+    this.setDisplayNone();
   };
 
   AudioPlayer.prototype.getShowElm = function(aNum) {
@@ -103,10 +99,11 @@
     localStorage.setItem('settingsData', JSON.stringify(data));
   };
 
-  AudioPlayer.prototype.setShowNum = function() {    
+  AudioPlayer.prototype.setShowNum = function() {
     this.digit = this.settingsSelectDigitElm.value;
-    this.num = this.settingsSelectNumElm.value;
-    this.showNumElm.innerHTML = this.getSerialNumber();
+    let numArray = this.settingsInputNumElm.value.split(',');
+    let num = (this.numType===1) ? this.settingsSelectNumElm.value : numArray[0];
+    this.showNumElm.innerHTML = this.getSerialNumber(num);
   };
 
   AudioPlayer.prototype.setNum = function(e) {
@@ -117,7 +114,6 @@
       }
       else {
         this.numArray = this.settingsInputNumElm.value.split(',');
-        this.num = this.numArray[this.arrayIndex];
         this.numType = 2;
       }
       this.repeat = this.settingsSelectRepeatElm.value;
@@ -221,11 +217,16 @@
     this.settingsSelectDigitElm.addEventListener('change', this.setShowNum.bind(this));
     this.settingsSelectNumElm.addEventListener('change', this.setShowNum.bind(this));
     this.btnElm.addEventListener('click', this.setNum.bind(this));
-    this.settingsRadioElm.forEach((elm) => {
-      if(elm) {
-        elm.addEventListener('change', this.selectType.bind(elm));
-      }
-    });
+
+    for(let cnt=0;cnt<2;++cnt) {
+      let that = this;
+      this.settingsRadioElm[cnt].addEventListener('click', function() {
+        that.selectType(cnt);
+        that.setShowNum();
+      });
+    }
+
+    this.settingsInputNumElm.addEventListener('keyup', this.setShowNum.bind(this));
   };
 
   AudioPlayer.prototype.run = function() {
