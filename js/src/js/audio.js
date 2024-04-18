@@ -29,7 +29,9 @@
     this.showElm = document.querySelector('.js-show');
     this.videoElm = document.querySelector('.js-video');
     this.btnElm = document.querySelector('.js-btn');
+    this.btnSaveElm = document.querySelector('.js-btnSave');
     this.showNumElm = this.settingsInputFileName1Elm.nextSibling;
+    this.modalElm = document.querySelectorAll('.js-modal');
 
     this.path = this.settingsData.path || '';
     this.digit = this.settingsData.digit || 1;
@@ -94,9 +96,9 @@
     return '現在再生中の問題の番号：' + aNum + '<br>残り：' + (this.repeat-this.cnt) + '/' + this.repeat + '回<br>スピード：' + this.speed + '秒<br>加速：' + this.acceleration + '秒';
   };
 
-  AudioPlayer.prototype.saveSettings = function(aNum, aNumArray, aNumType, aRepeat, aSpeedInit, aAcceleration, aPath, aDigit, aFileName1, aFileName2) {
+  AudioPlayer.prototype.saveSettings = function(aStorageName, aNum, aNumArray, aNumType, aRepeat, aSpeedInit, aAcceleration, aPath, aDigit, aFileName1, aFileName2) {
     let data = { no:aNum, array:aNumArray, type:aNumType, repeat:aRepeat, speed:aSpeedInit, acceleration: aAcceleration, path:aPath, digit: aDigit, filename1:aFileName1, filename2:aFileName2};
-    localStorage.setItem('settingsData', JSON.stringify(data));
+    localStorage.setItem(aStorageName, JSON.stringify(data));
   };
 
   AudioPlayer.prototype.setShowNum = function() {
@@ -125,7 +127,7 @@
       this.fileName1 = this.settingsInputFileName1Elm.value;
       this.fileName2 = this.settingsInputFileName2Elm.value;
   
-      this.saveSettings(this.num, this.numArray, this.numType, this.repeat, this.speedInit, this.acceleration,this.path, this.digit, this.fileName1, this.fileName2);
+      this.saveSettings('settingsData', this.num, this.numArray, this.numType, this.repeat, this.speedInit, this.acceleration,this.path, this.digit, this.fileName1, this.fileName2);
 
       this.settingsElm.classList.add('disp--none');
       this.btnElm.innerHTML = '設定を表示する'
@@ -157,6 +159,28 @@
     let serialNumber = this.getSerialNumber(aNum);
     let path = this.path + this.fileName1 + serialNumber + this.fileName2 + '.mp3';
     this.videoElm.innerHTML = '<source src="' + path + '" type="video/mp4">';
+  };
+
+  AudioPlayer.prototype.saveSettingsAs = function() {
+    let that = this;
+    let modalCloseElm = document.querySelector('.js-modalClose');
+    let modalSaveBtnElm = document.querySelector('.js-modalSaveBtn');
+    const closeModal = function(aElm, aIsSaved) {
+      aElm.addEventListener('click', function() {
+        for(let cnt=0;cnt<2;++cnt) {
+          that.modalElm[cnt].classList.add('disp--none');
+        }
+        let modalInputElm = document.querySelector('.js-modalInput');
+        if(aIsSaved) {
+          if(!modalInputElm.value) {
+            return;
+          }
+          that.saveSettings(modalInputElm.value, that.num, that.numArray, that.numType, that.repeat, that.speedInit, that.acceleration,that.path, that.digit, that.fileName1, that.fileName2);
+        }
+      });
+    };
+    closeModal(modalCloseElm,false);
+    closeModal(modalSaveBtnElm,true);
   };
 
   AudioPlayer.prototype.videoPlayRateControllerSet = function() {
@@ -218,8 +242,8 @@
     this.settingsSelectNumElm.addEventListener('change', this.setShowNum.bind(this));
     this.btnElm.addEventListener('click', this.setNum.bind(this));
 
+    let that = this;
     for(let cnt=0;cnt<2;++cnt) {
-      let that = this;
       this.settingsRadioElm[cnt].addEventListener('click', function() {
         that.selectType(cnt);
         that.setShowNum();
@@ -227,6 +251,13 @@
     }
 
     this.settingsInputNumElm.addEventListener('keyup', this.setShowNum.bind(this));
+    this.btnSaveElm.addEventListener('click', function() {
+      that.modalElm[1].innerHTML = '<button class="js-modalClose modal__close">✖️</button><span>名前：</span> <input type="text" class="js-modalInput"><br><button class="js-modalSaveBtn modal__saveBtn">保存する</button>';
+      for(let cnt=0;cnt<2;++cnt) {
+        that.modalElm[cnt].classList.remove('disp--none');
+      }
+      that.saveSettingsAs();
+    });
   };
 
   AudioPlayer.prototype.run = function() {
