@@ -39,7 +39,8 @@
     this.showNumElm = this.settingsInputFileName1Elm.nextSibling;
     this.modalElm = document.querySelectorAll('.js-modal');
 
-    this.currentSettingsName = localStorage.getItem('currentSettingsName');
+    this.defaultName = '設定１';
+    this.currentSettingsName = localStorage.getItem('currentSettingsName') || this.defaultName;
     this.setSettings();
   };
 
@@ -52,7 +53,7 @@
     this.num = this.currentSettingsData.no || 1;
     this.numArray = this.currentSettingsData.array || 1;
     this.numType = this.currentSettingsData.type || 1;
-    this.repeat = this.currentSettingsData.repeat || 1;
+    this.repeat = this.currentSettingsData.repetition || 1;
     this.acceleration = this.currentSettingsData.acceleration || 0;
     this.speedInit = this.currentSettingsData.speed || 1;
     this.showNumElm.innerHTML = this.num;
@@ -83,9 +84,14 @@
     this.settingsSelectDigitElm.innerHTML = this.getOption(1,5,1);
 
     let settingsNameData = '';
-    this.settingsData.forEach((value) => {
-      settingsNameData += '<option value="' + value.settingsName + '">' + value.settingsName + '</option>';
-    });
+    if(this.settingsData.size) {
+      this.settingsData.forEach((value) => {
+        settingsNameData += '<option value="' + value.settingsName + '">' + value.settingsName + '</option>';
+      });
+    }
+    else {
+      settingsNameData = '<option value="' + this.defaultName + '">' + this.defaultName + '</option>';
+    }
     this.settingsSelectNameElm.innerHTML = settingsNameData;
   };
 
@@ -128,7 +134,7 @@
   };
 
   AudioPlayer.prototype.saveSettings = function(aSettingsName, aNum, aNumArray, aNumType, aRepeat, aSpeedInit, aAcceleration, aPath, aDigit, aFileName1, aFileName2, aSettingsData) {
-    let data = { settingsName:aSettingsName, no:aNum, array:aNumArray, type:aNumType, repeat:aRepeat, speed:aSpeedInit, acceleration: aAcceleration, path:aPath, digit: aDigit, filename1:aFileName1, filename2:aFileName2};
+    let data = { settingsName:aSettingsName, no:aNum, array:aNumArray, type:aNumType, repetition:aRepeat, speed:aSpeedInit, acceleration: aAcceleration, path:aPath, digit: aDigit, filename1:aFileName1, filename2:aFileName2};
     aSettingsData.set(aSettingsName, data);
     localStorage.setItem('settingsData', JSON.stringify([...aSettingsData]));
     localStorage.setItem('currentSettingsName', aSettingsName);
