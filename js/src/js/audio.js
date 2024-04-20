@@ -7,18 +7,24 @@
   };
 
   AudioPlayer.prototype.initialize = function() {
-    this.settingsData = JSON.parse(localStorage.getItem('settingsData')) || [];
+    this.settingsData = new Map();
+    let settingsData = localStorage.getItem('settingsData');
+    if(settingsData!=='undefined') {
+      const settingsDataJson = JSON.parse(settingsData);
+      this.settingsData = new Map(settingsDataJson);
+    }
     this.isSettingsOpen = true;
     this.settingsElm = document.querySelector('.js-settings');
     this.settingsRadioElm = this.settingsElm.querySelectorAll('input[type="radio"]');
     this.settingsShowInputRadioElm = this.settingsElm.querySelectorAll('.js-showInputRadio');
 
     this.settingsSelectElm = this.settingsElm.querySelectorAll('select');
-    this.settingsSelectNumElm = this.settingsSelectElm[0];
-    this.settingsSelectRepeatElm = this.settingsSelectElm[1];
-    this.settingsSelectSpeedElm = this.settingsSelectElm[2];
-    this.settingsSelectAccelerationElm = this.settingsSelectElm[3];
-    this.settingsSelectDigitElm = this.settingsSelectElm[4];
+    this.settingsSelectNameElm = this.settingsSelectElm[0];
+    this.settingsSelectNumElm = this.settingsSelectElm[1];
+    this.settingsSelectRepeatElm = this.settingsSelectElm[2];
+    this.settingsSelectSpeedElm = this.settingsSelectElm[3];
+    this.settingsSelectAccelerationElm = this.settingsSelectElm[4];
+    this.settingsSelectDigitElm = this.settingsSelectElm[5];
 
     this.settingsTextElm = this.settingsElm.querySelectorAll('input[type="text"]');
     this.settingsInputNumElm = this.settingsTextElm[0];
@@ -33,20 +39,32 @@
     this.showNumElm = this.settingsInputFileName1Elm.nextSibling;
     this.modalElm = document.querySelectorAll('.js-modal');
 
-    this.path = this.settingsData.path || '';
-    this.digit = this.settingsData.digit || 1;
-    this.fileName1 = this.settingsData.filename1 || '';
-    this.fileName2 = this.settingsData.filename2 || '';
-    this.num = this.settingsData.no || 1;
-    this.numArray = this.settingsData.array || 1;
-    this.numType = this.settingsData.type || 1;
+    this.currentSettingsName = localStorage.getItem('currentSettingsName');
+    this.setSettings();
+  };
+
+  AudioPlayer.prototype.setSettings = function() {
+    this.currentSettingsData = this.settingsData.get(this.currentSettingsName) || '';
+    this.path = this.currentSettingsData.path || '';
+    this.digit = this.currentSettingsData.digit || 1;
+    this.fileName1 = this.currentSettingsData.filename1 || '';
+    this.fileName2 = this.currentSettingsData.filename2 || '';
+    this.num = this.currentSettingsData.no || 1;
+    this.numArray = this.currentSettingsData.array || 1;
+    this.numType = this.currentSettingsData.type || 1;
+    this.repeat = this.currentSettingsData.repeat || 1;
+    this.acceleration = this.currentSettingsData.acceleration || 0;
+    this.speedInit = this.currentSettingsData.speed || 1;
+    this.showNumElm.innerHTML = this.num;
     this.endNum = 1000;
     this.cnt = 0;
     this.arrayIndex = 0;
-    this.repeat = this.settingsData.repeat || 1;
-    this.acceleration = this.settingsData.acceleration || 0;
-    this.speedInit = this.settingsData.speed || 1;
-    this.showNumElm.innerHTML = this.num;
+  }
+
+  AudioPlayer.prototype.setCurrentSettings = function() {
+    this.currentSettingsName = this.settingsSelectNameElm.value;
+    this.setSettings();
+    this.setValue();
   };
 
   AudioPlayer.prototype.getOption = function(aMin,aMax,aPlus) {
@@ -63,9 +81,16 @@
     this.settingsSelectAccelerationElm.innerHTML = this.getOption(0.00,0.1,0.01);
     this.settingsSelectRepeatElm.innerHTML = this.getOption(1,300,1);
     this.settingsSelectDigitElm.innerHTML = this.getOption(1,5,1);
+
+    let settingsNameData = '';
+    this.settingsData.forEach((value) => {
+      settingsNameData += '<option value="' + value.settingsName + '">' + value.settingsName + '</option>';
+    });
+    this.settingsSelectNameElm.innerHTML = settingsNameData;
   };
 
   AudioPlayer.prototype.setValue = function() {
+    this.settingsSelectNameElm.value = this.currentSettingsName;
     this.settingsSelectNumElm.value = this.num;
     this.settingsSelectRepeatElm.value = this.repeat;
     this.settingsSelectSpeedElm.value = this.speedInit;
@@ -92,13 +117,21 @@
     this.setDisplayNone();
   };
 
+  AudioPlayer.prototype.changeSettings = function() {
+    let name = this.settingsSelectNameElm.value;
+    this.currentSettingsData = this.settingsData.get(name);
+    this.setCurrentSettings(this.currentSettingsData);
+  };
+
   AudioPlayer.prototype.getShowElm = function(aNum) {
     return '現在再生中の問題の番号：' + aNum + '<br>残り：' + (this.repeat-this.cnt) + '/' + this.repeat + '回<br>スピード：' + this.speed + '秒<br>加速：' + this.acceleration + '秒';
   };
 
-  AudioPlayer.prototype.saveSettings = function(aStorageName, aNum, aNumArray, aNumType, aRepeat, aSpeedInit, aAcceleration, aPath, aDigit, aFileName1, aFileName2) {
-    let data = { no:aNum, array:aNumArray, type:aNumType, repeat:aRepeat, speed:aSpeedInit, acceleration: aAcceleration, path:aPath, digit: aDigit, filename1:aFileName1, filename2:aFileName2};
-    localStorage.setItem(aStorageName, JSON.stringify(data));
+  AudioPlayer.prototype.saveSettings = function(aSettingsName, aNum, aNumArray, aNumType, aRepeat, aSpeedInit, aAcceleration, aPath, aDigit, aFileName1, aFileName2, aSettingsData) {
+    let data = { settingsName:aSettingsName, no:aNum, array:aNumArray, type:aNumType, repeat:aRepeat, speed:aSpeedInit, acceleration: aAcceleration, path:aPath, digit: aDigit, filename1:aFileName1, filename2:aFileName2};
+    aSettingsData.set(aSettingsName, data);
+    localStorage.setItem('settingsData', JSON.stringify([...aSettingsData]));
+    localStorage.setItem('currentSettingsName', aSettingsName);
   };
 
   AudioPlayer.prototype.setShowNum = function() {
@@ -126,8 +159,9 @@
       this.digit = parseFloat(this.settingsSelectDigitElm.value);
       this.fileName1 = this.settingsInputFileName1Elm.value;
       this.fileName2 = this.settingsInputFileName2Elm.value;
-  
-      this.saveSettings('settingsData', this.num, this.numArray, this.numType, this.repeat, this.speedInit, this.acceleration,this.path, this.digit, this.fileName1, this.fileName2);
+      this.currentSettingsName = this.settingsSelectNameElm.value;
+
+      this.saveSettings(this.currentSettingsName, this.num, this.numArray, this.numType, this.repeat, this.speedInit, this.acceleration,this.path, this.digit, this.fileName1, this.fileName2, this.settingsData);
 
       this.settingsElm.classList.add('disp--none');
       this.btnElm.innerHTML = '設定を表示する'
@@ -142,7 +176,7 @@
     }
     else {//prepare Settings
       this.settingsElm.classList.remove('disp--none');
-      this.btnElm.innerHTML = '設定して再生する' 
+      this.btnElm.innerHTML = '設定して再生する';
       this.isSettingsOpen = !this.isSettingsOpen;
     }
   };
@@ -163,8 +197,6 @@
 
   AudioPlayer.prototype.saveSettingsAs = function() {
     let that = this;
-    let modalCloseElm = document.querySelector('.js-modalClose');
-    let modalSaveBtnElm = document.querySelector('.js-modalSaveBtn');
     const closeModal = function(aElm, aIsSaved) {
       aElm.addEventListener('click', function() {
         for(let cnt=0;cnt<2;++cnt) {
@@ -175,10 +207,12 @@
           if(!modalInputElm.value) {
             return;
           }
-          that.saveSettings(modalInputElm.value, that.num, that.numArray, that.numType, that.repeat, that.speedInit, that.acceleration,that.path, that.digit, that.fileName1, that.fileName2);
+          that.saveSettings(modalInputElm.value, that.num, that.numArray, that.numType, that.repeat, that.speedInit, that.acceleration,that.path, that.digit, that.fileName1, that.fileName2, that.settingsData);
         }
       });
     };
+    let modalCloseElm = document.querySelector('.js-modalClose');
+    let modalSaveBtnElm = document.querySelector('.js-modalSaveBtn');
     closeModal(modalCloseElm,false);
     closeModal(modalSaveBtnElm,true);
   };
@@ -240,6 +274,7 @@
     this.setValue();
     this.settingsSelectDigitElm.addEventListener('change', this.setShowNum.bind(this));
     this.settingsSelectNumElm.addEventListener('change', this.setShowNum.bind(this));
+    this.settingsSelectNameElm.addEventListener('change', this.changeSettings.bind(this));
     this.btnElm.addEventListener('click', this.setNum.bind(this));
 
     let that = this;
