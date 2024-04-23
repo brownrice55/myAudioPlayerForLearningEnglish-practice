@@ -25,6 +25,7 @@
     this.settingsSelectSpeedElm = this.settingsSelectElm[3];
     this.settingsSelectAccelerationElm = this.settingsSelectElm[4];
     this.settingsSelectDigitElm = this.settingsSelectElm[5];
+    this.settingsSelectTimerElm = this.settingsSelectElm[6];
 
     this.settingsTextElm = this.settingsElm.querySelectorAll('input[type="text"]');
     this.settingsInputNumElm = this.settingsTextElm[0];
@@ -57,10 +58,11 @@
     this.acceleration = this.currentSettingsData.acceleration || 0;
     this.speedInit = this.currentSettingsData.speed || 1;
     this.showNumElm.innerHTML = this.num;
+    this.timer = this.currentSettingsData.timer || 1;
     this.endNum = 1000;
     this.cnt = 0;
     this.arrayIndex = 0;
-  }
+  };
 
   AudioPlayer.prototype.setCurrentSettings = function() {
     this.currentSettingsName = this.settingsSelectNameElm.value;
@@ -82,6 +84,7 @@
     this.settingsSelectAccelerationElm.innerHTML = this.getOption(0.00,0.1,0.01);
     this.settingsSelectRepeatElm.innerHTML = this.getOption(1,300,1);
     this.settingsSelectDigitElm.innerHTML = this.getOption(1,5,1);
+    this.settingsSelectTimerElm.innerHTML = this.getOption(0,20,0.5);
 
     let settingsNameData = '';
     if(this.settingsData.size) {
@@ -106,6 +109,7 @@
     this.settingsSelectDigitElm.value = this.digit;
     this.settingsInputFileName1Elm.value = this.fileName1;
     this.settingsInputFileName2Elm.value = this.fileName2;
+    this.settingsSelectTimerElm.value = this.timer;
 
     this.setDisplayNone();
   };
@@ -133,8 +137,8 @@
     return '現在再生中の問題の番号：' + aNum + '<br>残り：' + (this.repeat-this.cnt) + '/' + this.repeat + '回<br>スピード：' + this.speed + '秒<br>加速：' + this.acceleration + '秒';
   };
 
-  AudioPlayer.prototype.saveSettings = function(aSettingsName, aNum, aNumArray, aNumType, aRepeat, aSpeedInit, aAcceleration, aPath, aDigit, aFileName1, aFileName2, aSettingsData) {
-    let data = { settingsName:aSettingsName, no:aNum, array:aNumArray, type:aNumType, repetition:aRepeat, speed:aSpeedInit, acceleration: aAcceleration, path:aPath, digit: aDigit, filename1:aFileName1, filename2:aFileName2};
+  AudioPlayer.prototype.saveSettings = function(aSettingsName, aNum, aNumArray, aNumType, aRepeat, aSpeedInit, aAcceleration, aPath, aDigit, aFileName1, aFileName2, aSettingsData, aTimer) {
+    let data = { settingsName:aSettingsName, no:aNum, array:aNumArray, type:aNumType, repetition:aRepeat, speed:aSpeedInit, acceleration: aAcceleration, path:aPath, digit: aDigit, filename1:aFileName1, filename2:aFileName2, timer:aTimer};
     aSettingsData.set(aSettingsName, data);
     localStorage.setItem('settingsData', JSON.stringify([...aSettingsData]));
     localStorage.setItem('currentSettingsName', aSettingsName);
@@ -166,8 +170,9 @@
       this.fileName1 = this.settingsInputFileName1Elm.value;
       this.fileName2 = this.settingsInputFileName2Elm.value;
       this.currentSettingsName = this.settingsSelectNameElm.value;
+      this.timer = this.settingsSelectTimerElm.value;
 
-      this.saveSettings(this.currentSettingsName, this.num, this.numArray, this.numType, this.repeat, this.speedInit, this.acceleration,this.path, this.digit, this.fileName1, this.fileName2, this.settingsData);
+      this.saveSettings(this.currentSettingsName, this.num, this.numArray, this.numType, this.repeat, this.speedInit, this.acceleration,this.path, this.digit, this.fileName1, this.fileName2, this.settingsData, this.timer);
 
       this.settingsElm.classList.add('disp--none');
       this.btnElm.innerHTML = '設定を表示する'
@@ -213,7 +218,7 @@
           if(!modalInputElm.value) {
             return;
           }
-          that.saveSettings(modalInputElm.value, that.num, that.numArray, that.numType, that.repeat, that.speedInit, that.acceleration,that.path, that.digit, that.fileName1, that.fileName2, that.settingsData);
+          that.saveSettings(modalInputElm.value, that.num, that.numArray, that.numType, that.repeat, that.speedInit, that.acceleration, that.path, that.digit, that.fileName1, that.fileName2, that.settingsData, that.timer);
         }
       });
     };
@@ -230,6 +235,12 @@
 
   AudioPlayer.prototype.videoPlayRateControllerFirstTime = function() {
     this.videoElm.playbackRate = this.speed;
+  };
+
+  AudioPlayer.prototype.setTimer = function() {
+    const timer = setTimeout(() => {
+      this.videoElm.load();
+    }, this.timer*1000);
   };
 
   AudioPlayer.prototype.videoPlayRateController = function() {
@@ -250,7 +261,7 @@
           this.videoElm.playbackRate = this.speed;
         }
         this.showElm.innerHTML = this.getShowElm(this.num);
-        this.videoElm.load();
+        this.setTimer();
       }
     }
     else {
@@ -270,7 +281,7 @@
           this.videoElm.playbackRate = this.speed;
         }
         this.showElm.innerHTML = this.getShowElm(this.numArray[this.arrayIndex]);
-        this.videoElm.load();
+        this.setTimer();
       }
     }
   };
@@ -278,6 +289,7 @@
   AudioPlayer.prototype.setEvent = function() {
     this.setOption();
     this.setValue();
+    this.setShowNum();
     this.settingsSelectDigitElm.addEventListener('change', this.setShowNum.bind(this));
     this.settingsSelectNumElm.addEventListener('change', this.setShowNum.bind(this));
     this.settingsSelectNameElm.addEventListener('change', this.changeSettings.bind(this));
