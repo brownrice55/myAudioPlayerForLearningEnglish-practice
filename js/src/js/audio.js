@@ -36,7 +36,10 @@
     this.showElm = document.querySelector('.js-show');
     this.videoElm = document.querySelector('.js-video');
     this.btnElm = document.querySelector('.js-btn');
-    this.btnSaveElm = document.querySelector('.js-btnSave');
+    this.saveElm = document.querySelector('.js-save');
+    this.saveBtnElm = this.saveElm.querySelectorAll('button');
+    this.btnSaveElm = this.saveBtnElm[0];
+    this.btnSaveAsElm = this.saveBtnElm[1];
     this.showNumElm = this.settingsInputFileName1Elm.nextSibling;
     this.modalElm = document.querySelectorAll('.js-modal');
 
@@ -151,8 +154,7 @@
     this.showNumElm.innerHTML = this.getSerialNumber(num);
   };
 
-  AudioPlayer.prototype.setNum = function(e) {
-    if(this.isSettingsOpen) {//set Settings
+  AudioPlayer.prototype.getNum = function() {
       if(this.settingsRadioElm[0].checked) {
         this.num = this.settingsSelectNumElm.value;
         this.numType = 1;
@@ -171,11 +173,16 @@
       this.fileName2 = this.settingsInputFileName2Elm.value;
       this.currentSettingsName = this.settingsSelectNameElm.value;
       this.timer = this.settingsSelectTimerElm.value;
+  };
 
-      this.saveSettings(this.currentSettingsName, this.num, this.numArray, this.numType, this.repeat, this.speedInit, this.acceleration,this.path, this.digit, this.fileName1, this.fileName2, this.settingsData, this.timer);
+  AudioPlayer.prototype.setNum = function(e) {
+    if(this.isSettingsOpen) {//set Settings
+      this.getNum();
+      localStorage.setItem('currentSettingsName', this.currentSettingsName);
 
       this.settingsElm.classList.add('disp--none');
-      this.btnElm.innerHTML = '設定を表示する'
+      this.saveElm.classList.add('disp--none');
+      this.btnElm.innerHTML = '設定を表示する';
       this.isSettingsOpen = !this.isSettingsOpen;
 
       this.videoElm.parentNode.className = '';
@@ -187,6 +194,7 @@
     }
     else {//prepare Settings
       this.settingsElm.classList.remove('disp--none');
+      this.saveElm.classList.remove('disp--none');
       this.btnElm.innerHTML = '設定して再生する';
       this.isSettingsOpen = !this.isSettingsOpen;
     }
@@ -218,7 +226,14 @@
           if(!modalInputElm.value) {
             return;
           }
-          that.saveSettings(modalInputElm.value, that.num, that.numArray, that.numType, that.repeat, that.speedInit, that.acceleration, that.path, that.digit, that.fileName1, that.fileName2, that.settingsData, that.timer);
+          that.getNum();
+          let saveSettings = new Promise(function(resolve, reject) {
+            that.saveSettings(modalInputElm.value, that.num, that.numArray, that.numType, that.repeat, that.speedInit, that.acceleration, that.path, that.digit, that.fileName1, that.fileName2, that.settingsData, that.timer);
+            resolve();
+          });
+          saveSettings.then(function(value) {
+            window.location.reload(false);
+          });
         }
       });
     };
@@ -305,6 +320,10 @@
 
     this.settingsInputNumElm.addEventListener('keyup', this.setShowNum.bind(this));
     this.btnSaveElm.addEventListener('click', function() {
+      that.getNum();
+      that.saveSettings(that.currentSettingsName, that.num, that.numArray, that.numType, that.repeat, that.speedInit, that.acceleration,that.path, that.digit, that.fileName1, that.fileName2, that.settingsData, that.timer);
+    });
+    this.btnSaveAsElm.addEventListener('click', function() {
       that.modalElm[1].innerHTML = '<button class="js-modalClose modal__close">✖️</button><span>名前：</span> <input type="text" class="js-modalInput"><br><button class="js-modalSaveBtn modal__saveBtn">保存する</button>';
       for(let cnt=0;cnt<2;++cnt) {
         that.modalElm[cnt].classList.remove('disp--none');
