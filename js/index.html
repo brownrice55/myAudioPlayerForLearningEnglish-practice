@@ -56,17 +56,21 @@
         <input type="text">
       </dd>
       <dt>
-        ファイル名<br>
-        連番の桁数<select></select>桁<br>
+        ファイル名
       </dt>
       <dd>
         <input type="text"><span></span><input type="text">.mp3
+        <div>
+          <input type="checkbox" id="alignment"><label for="alignment">桁数を揃える</label>
+          <div class="js-option disp--none">連番の桁数<select></select>桁</div>
+        </div>
       </dd>
       <dt>
         休止設定
       </dt>
       <dd>
-        後ろに<select></select>秒間ポーズを入れる
+        <input type="checkbox" id="pause"><label for="pause">休止設定を利用する</label>
+        <div class="js-option disp--none">後ろに<select></select>秒間ポーズを入れる</div>
       </dd>
     </dl>
   </div>
