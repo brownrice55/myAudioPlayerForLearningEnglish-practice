@@ -36,19 +36,24 @@
     this.settingsCheckboxElm = this.settingsElm.querySelectorAll('input[type="checkbox"]');
     this.option = document.querySelectorAll('.js-option');
 
+    this.editAreaElm = document.querySelector('.js-editArea');
+    this.editBtnElm = this.editAreaElm.querySelector('button');
     this.showElm = document.querySelector('.js-show');
     this.videoElm = document.querySelector('.js-video');
     this.btnElm = document.querySelector('.js-btn');
     this.saveElm = document.querySelector('.js-save');
     this.saveBtnElm = this.saveElm.querySelectorAll('button');
-    this.btnSaveElm = this.saveBtnElm[0];
-    this.btnSaveAsElm = this.saveBtnElm[1];
+    this.btnSaveAsElm = this.saveBtnElm[0];
+    this.btnSaveElm = this.saveBtnElm[1];
     this.showNumElm = this.settingsInputFileName1Elm.nextSibling;
     this.modalElm = document.querySelectorAll('.js-modal');
 
     this.defaultName = '設定１';
     this.currentSettingsName = localStorage.getItem('currentSettingsName') || this.defaultName;
     this.setSettings();
+
+    this.isSomethingSaved = false;
+    this.showAndHideNameSetting();
   };
 
   AudioPlayer.prototype.setSettings = function() {
@@ -60,7 +65,7 @@
     this.num = this.currentSettingsData.no || 1;
     this.numArray = this.currentSettingsData.array || 1;
     this.numType = this.currentSettingsData.type || 1;
-    this.repeat = this.currentSettingsData.repetition || 1;
+    this.repetition = this.currentSettingsData.repetition || 1;
     this.acceleration = this.currentSettingsData.acceleration || 0;
     this.speedInit = this.currentSettingsData.speed || 1;
     this.showNumElm.innerHTML = this.num;
@@ -108,7 +113,7 @@
   AudioPlayer.prototype.setValue = function() {
     this.settingsSelectNameElm.value = this.currentSettingsName;
     this.settingsSelectNumElm.value = this.num;
-    this.settingsSelectRepeatElm.value = this.repeat;
+    this.settingsSelectRepeatElm.value = this.repetition;
     this.settingsSelectSpeedElm.value = this.speedInit;
     this.settingsSelectAccelerationElm.value = this.acceleration;
     this.settingsInputNumElm.value = this.numArray;
@@ -139,6 +144,15 @@
     this.setDisplayNone();
   };
 
+  AudioPlayer.prototype.showAndHideNameSetting = function() {
+    if(this.settingsData.size) {
+      this.editAreaElm.classList.remove('disp--none'); 
+    }
+    else {
+      this.editAreaElm.classList.add('disp--none'); 
+    }
+  };
+
   AudioPlayer.prototype.showAndHideOptions = function(aCnt) {
     this.isCheckedIndexArray[aCnt] = !this.isCheckedIndexArray[aCnt];
     if(this.isCheckedIndexArray[aCnt]) {
@@ -157,7 +171,7 @@
   };
 
   AudioPlayer.prototype.getShowElm = function(aNum) {
-    return '現在再生中の問題の番号：' + aNum + '<br>残り：' + (this.repeat-this.cnt) + '/' + this.repeat + '回<br>スピード：' + this.speed + '秒<br>加速：' + this.acceleration + '秒';
+    return '現在再生中の問題の番号：' + aNum + '<br>残り：' + (this.repetition-this.cnt) + '/' + this.repetition + '回<br>スピード：' + this.speed + '秒<br>加速：' + this.acceleration + '秒';
   };
 
   AudioPlayer.prototype.saveSettings = function(aSettingsName, aNum, aNumArray, aNumType, aRepeat, aSpeedInit, aAcceleration, aPath, aDigit, aFileName1, aFileName2, aSettingsData, aTimer, aIsCheckedIndexArray) {
@@ -165,6 +179,7 @@
     aSettingsData.set(aSettingsName, data);
     localStorage.setItem('settingsData', JSON.stringify([...aSettingsData]));
     localStorage.setItem('currentSettingsName', aSettingsName);
+    this.showAndHideNameSetting();
   };
 
   AudioPlayer.prototype.setShowNum = function() {
@@ -188,7 +203,7 @@
         this.numArray = this.settingsInputNumElm.value.split(',');
         this.numType = 2;
       }
-      this.repeat = this.settingsSelectRepeatElm.value;
+      this.repetition = this.settingsSelectRepeatElm.value;
       this.speedInit = parseFloat(this.settingsSelectSpeedElm.value);
       this.speed = this.speedInit;
       this.acceleration = parseFloat(this.settingsSelectAccelerationElm.value);
@@ -239,33 +254,85 @@
     this.videoElm.innerHTML = '<source src="' + path + '" type="video/mp4">';
   };
 
-  AudioPlayer.prototype.saveSettingsAs = function() {
+  AudioPlayer.prototype.closeModal = function(aElm, aIsSaved) {
     let that = this;
-    const closeModal = function(aElm, aIsSaved) {
-      aElm.addEventListener('click', function() {
-        for(let cnt=0;cnt<2;++cnt) {
-          that.modalElm[cnt].classList.add('disp--none');
+    aElm.addEventListener('click', function() {
+      for(let cnt=0;cnt<2;++cnt) {
+        that.modalElm[cnt].classList.add('disp--none');
+      }
+      let modalInputElm = document.querySelector('.js-modalInput');
+      if(aIsSaved) {
+        if(!modalInputElm.value) {
+          that.modalElm[1].innerHTML = '';
+          return;
         }
-        let modalInputElm = document.querySelector('.js-modalInput');
-        if(aIsSaved) {
-          if(!modalInputElm.value) {
-            return;
-          }
-          that.getNum();
-          let saveSettings = new Promise(function(resolve, reject) {
-            that.saveSettings(modalInputElm.value, that.num, that.numArray, that.numType, that.repeat, that.speedInit, that.acceleration, that.path, that.digit, that.fileName1, that.fileName2, that.settingsData, that.timer, that.isCheckedIndexArray);
-            resolve();
-          });
-          saveSettings.then(function(value) {
-            window.location.reload(false);
-          });
-        }
-      });
-    };
+        that.getNum();
+        let saveSettings = new Promise(function(resolve, reject) {
+          that.saveSettings(modalInputElm.value, that.num, that.numArray, that.numType, that.repetition, that.speedInit, that.acceleration, that.path, that.digit, that.fileName1, that.fileName2, that.settingsData, that.timer, that.isCheckedIndexArray);
+          resolve();
+        });
+        saveSettings.then(function(value) {
+          window.location.reload(false);
+        });
+      }
+      else if(that.isSomethingSaved) {
+        window.location.reload(false);
+      }
+      that.modalElm[1].innerHTML = '';
+    });
+  };
+
+  AudioPlayer.prototype.saveSettingsAs = function() {
     let modalCloseElm = document.querySelector('.js-modalClose');
     let modalSaveBtnElm = document.querySelector('.js-modalSaveBtn');
-    closeModal(modalCloseElm,false);
-    closeModal(modalSaveBtnElm,true);
+    this.closeModal(modalCloseElm,false);
+    this.closeModal(modalSaveBtnElm,true);
+  };
+
+  AudioPlayer.prototype.deleteAndEditSettings = function() {
+    let that = this;
+    let editBtnElm = document.querySelectorAll('.js-editBtn');
+    editBtnElm.forEach((elm, index) => {
+      elm.addEventListener('click', function() {
+        if(this.parentNode.previousSibling.disabled) {
+          this.parentNode.previousSibling.disabled = false;
+          this.innerHTML = '保存';
+        }
+        else {
+          if(that.settingsData.has(this.value)) {//same name
+            return;
+          }
+          let name = this.dataset.name;
+          let selectedData = that.settingsData.get(name);
+          let newName = this.parentNode.previousSibling.value;
+          localStorage.setItem('currentSettingsName', newName);
+          this.parentNode.previousSibling.disabled = true;
+          this.innerHTML = '編集';
+          that.settingsData.delete(name);
+          let data = { settingsName:newName, no:selectedData.num, array:selectedData.numArray, type:selectedData.numType, repetition:selectedData.repetition, speed:selectedData.speed, acceleration: selectedData.acceleration, path:selectedData.path, digit: selectedData.digit, filename1:selectedData.fileName1, filename2:selectedData.fileName2, timer:selectedData.timer, isCheckedIndexArray:selectedData.isCheckedIndexArray};
+          that.settingsData.set(newName, data);
+          localStorage.setItem('settingsData', JSON.stringify([...that.settingsData]));
+        }
+      });
+      elm.parentNode.previousSibling.addEventListener('change', function() {
+        that.isSomethingSaved = !that.settingsData.has(this.value);
+      });
+    });
+
+    let deleteBtnElm = document.querySelectorAll('.js-deleteBtn');
+    deleteBtnElm.forEach((elm, index) => {
+      elm.addEventListener('click', function() {
+        let name = this.dataset.name;
+        that.settingsData.delete(name);
+        localStorage.setItem('settingsData', JSON.stringify([...that.settingsData]));
+        this.parentNode.parentNode.remove();
+        window.location.reload(false);
+      });
+    });
+
+    let modalCloseElm = document.querySelector('.js-modalClose');
+    this.closeModal(modalCloseElm,false);
+
   };
 
   AudioPlayer.prototype.videoPlayRateControllerSet = function() {
@@ -289,7 +356,7 @@
         videoElm.pause();
       }
       else {
-        if(this.cnt>=this.repeat-1) {
+        if(this.cnt>=this.repetition-1) {
           ++this.num;
           this.speed = this.speedInit;
           this.setPath(this.num);
@@ -314,7 +381,7 @@
         videoElm.pause();
       }
       else {
-        if(this.cnt>=this.repeat-1) {
+        if(this.cnt>=this.repetition-1) {
           ++this.arrayIndex;
           this.speed = this.speedInit;
           this.setPath(this.numArray[this.arrayIndex]);
@@ -356,7 +423,7 @@
     this.settingsInputNumElm.addEventListener('keyup', this.setShowNum.bind(this));
     this.btnSaveElm.addEventListener('click', function() {
       that.getNum();
-      that.saveSettings(that.currentSettingsName, that.num, that.numArray, that.numType, that.repeat, that.speedInit, that.acceleration,that.path, that.digit, that.fileName1, that.fileName2, that.settingsData, that.timer, that.isCheckedIndexArray);
+      that.saveSettings(that.currentSettingsName, that.num, that.numArray, that.numType, that.repetition, that.speedInit, that.acceleration,that.path, that.digit, that.fileName1, that.fileName2, that.settingsData, that.timer, that.isCheckedIndexArray);
     });
     this.btnSaveAsElm.addEventListener('click', function() {
       that.modalElm[1].innerHTML = '<button class="js-modalClose modal__close">✖️</button><span>名前：</span> <input type="text" class="js-modalInput"><br><button class="js-modalSaveBtn modal__saveBtn">保存する</button>';
@@ -364,6 +431,19 @@
         that.modalElm[cnt].classList.remove('disp--none');
       }
       that.saveSettingsAs();
+    });
+    this.editBtnElm.addEventListener('click', function() {
+      let input = '';
+      let cnt = 0;
+      that.settingsData.forEach((value) => {
+        input += '<li><input type="text" data-index=' + cnt + ' value="' + value.settingsName + '" disabled><div class="modal__deleteEditBtnArea"><button class="js-editBtn" data-name=' + value.settingsName + '>編集</button><button class="js-deleteBtn" data-name=' + value.settingsName + '>削除</button></div></li>';
+        ++cnt;
+      });
+      that.modalElm[1].innerHTML = '<p>「編集」ボタンを押して編集した後に「保存」ボタンを押してください。</p><button class="js-modalClose modal__close">✖️</button><ul>' + input + '</ul>';
+      for(let cnt=0;cnt<2;++cnt) {
+        that.modalElm[cnt].classList.remove('disp--none');
+      }
+      that.deleteAndEditSettings();
     });
     for(let cnt=0;cnt<2;++cnt) {
       this.settingsCheckboxElm[cnt].addEventListener('click', function() {
