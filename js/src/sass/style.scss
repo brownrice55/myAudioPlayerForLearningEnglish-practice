@@ -1,6 +1,3 @@
-.disp--none {
-  display: none;
-}
 .settings {
   dl {
     width: 100%;
@@ -68,8 +65,14 @@
 }
 .btnArea {
   text-align: center;
+  &__cont {
+    display: inline-block;
+  }
   button {
     margin: 10px 14px;
     padding: 10px;
   }
+}
+.disp--none {
+  display: none;
 }

@@ -17,6 +17,7 @@
     this.settingsElm = document.querySelector('.js-settings');
     this.settingsRadioElm = this.settingsElm.querySelectorAll('input[type="radio"]');
     this.settingsShowInputRadioElm = this.settingsElm.querySelectorAll('.js-showInputRadio');
+    this.settingsNameAreaElm = document.querySelectorAll('.js-settingsNameArea');
 
     this.settingsSelectElm = this.settingsElm.querySelectorAll('select');
     this.settingsSelectNameElm = this.settingsSelectElm[0];
@@ -28,10 +29,11 @@
     this.settingsSelectTimerElm = this.settingsSelectElm[6];
 
     this.settingsTextElm = this.settingsElm.querySelectorAll('input[type="text"]');
-    this.settingsInputNumElm = this.settingsTextElm[0];
-    this.settingsInputPathElm = this.settingsTextElm[1];
-    this.settingsInputFileName1Elm = this.settingsTextElm[2];
-    this.settingsInputFileName2Elm = this.settingsTextElm[3];
+    this.settingsInputNameInitialElm = this.settingsTextElm[0];
+    this.settingsInputNumElm = this.settingsTextElm[1];
+    this.settingsInputPathElm = this.settingsTextElm[2];
+    this.settingsInputFileName1Elm = this.settingsTextElm[3];
+    this.settingsInputFileName2Elm = this.settingsTextElm[4];
 
     this.settingsCheckboxElm = this.settingsElm.querySelectorAll('input[type="checkbox"]');
     this.option = document.querySelectorAll('.js-option');
@@ -41,18 +43,19 @@
     this.showElm = document.querySelector('.js-show');
     this.videoElm = document.querySelector('.js-video');
     this.btnElm = document.querySelector('.js-btn');
-    this.saveElm = document.querySelector('.js-save');
-    this.saveBtnElm = this.saveElm.querySelectorAll('button');
+    this.saveAreaElm = document.querySelector('.js-save');
+    this.saveBtnAreaDivElm = this.saveAreaElm.querySelectorAll('div');
+    this.saveBtnElm = this.saveAreaElm.querySelectorAll('button');
     this.btnSaveAsElm = this.saveBtnElm[0];
     this.btnSaveElm = this.saveBtnElm[1];
     this.showNumElm = this.settingsInputFileName1Elm.nextSibling;
     this.modalElm = document.querySelectorAll('.js-modal');
 
-    this.defaultName = '設定１';
-    this.currentSettingsName = localStorage.getItem('currentSettingsName') || this.defaultName;
+    this.currentSettingsName = localStorage.getItem('currentSettingsName');
     this.setSettings();
 
-    this.isSomethingSaved = false;
+    this.isSomethingChanged = false;
+    this.isInitial = (!this.settingsData.size) ? true : false;
     this.showAndHideNameSetting();
   };
 
@@ -99,15 +102,12 @@
     this.settingsSelectTimerElm.innerHTML = this.getOption(1,20,0.5);
 
     let settingsNameData = '';
-    if(this.settingsData.size) {
+    if(!this.isInitial) {
       this.settingsData.forEach((value) => {
         settingsNameData += '<option value="' + value.settingsName + '">' + value.settingsName + '</option>';
       });
+      this.settingsSelectNameElm.innerHTML = settingsNameData;
     }
-    else {
-      settingsNameData = '<option value="' + this.defaultName + '">' + this.defaultName + '</option>';
-    }
-    this.settingsSelectNameElm.innerHTML = settingsNameData;
   };
 
   AudioPlayer.prototype.setValue = function() {
@@ -145,11 +145,19 @@
   };
 
   AudioPlayer.prototype.showAndHideNameSetting = function() {
-    if(this.settingsData.size) {
-      this.editAreaElm.classList.remove('disp--none'); 
+    if(!this.isInitial) {
+      this.editAreaElm.classList.remove('disp--none');
+      this.settingsNameAreaElm[1].classList.add('disp--none');
+      this.settingsNameAreaElm[0].classList.remove('disp--none');
+      this.saveBtnAreaDivElm[0].classList.remove('disp--none');
+      this.saveBtnElm[1].innerHTML = '上書き保存する';
     }
     else {
       this.editAreaElm.classList.add('disp--none'); 
+      this.settingsNameAreaElm[0].classList.add('disp--none');
+      this.settingsNameAreaElm[1].classList.remove('disp--none');
+      this.saveBtnAreaDivElm[0].classList.add('disp--none');
+      this.saveBtnElm[1].innerHTML = '設定を保存する';
     }
   };
 
@@ -179,6 +187,9 @@
     aSettingsData.set(aSettingsName, data);
     localStorage.setItem('settingsData', JSON.stringify([...aSettingsData]));
     localStorage.setItem('currentSettingsName', aSettingsName);
+    let settingsNameData = '<option value="' +aSettingsName + '">' + aSettingsName + '</option>';
+    this.settingsSelectNameElm.innerHTML = settingsNameData;
+    this.isInitial = false;
     this.showAndHideNameSetting();
   };
 
@@ -211,7 +222,7 @@
       this.digit = parseFloat(this.settingsSelectDigitElm.value);
       this.fileName1 = this.settingsInputFileName1Elm.value;
       this.fileName2 = this.settingsInputFileName2Elm.value;
-      this.currentSettingsName = this.settingsSelectNameElm.value;
+      this.currentSettingsName = (!this.isInitial) ? this.settingsSelectNameElm.value : this.settingsInputNameInitialElm.value;
       this.timer = this.settingsSelectTimerElm.value;
   };
 
@@ -221,7 +232,7 @@
       localStorage.setItem('currentSettingsName', this.currentSettingsName);
 
       this.settingsElm.classList.add('disp--none');
-      this.saveElm.classList.add('disp--none');
+      this.saveAreaElm.classList.add('disp--none');
       this.btnElm.innerHTML = '設定を表示する';
       this.isSettingsOpen = !this.isSettingsOpen;
 
@@ -234,8 +245,8 @@
     }
     else {//prepare Settings
       this.settingsElm.classList.remove('disp--none');
-      this.saveElm.classList.remove('disp--none');
-      this.btnElm.innerHTML = '設定して再生する';
+      this.saveAreaElm.classList.remove('disp--none');
+      this.btnElm.innerHTML = '上記の設定で再生する';
       this.isSettingsOpen = !this.isSettingsOpen;
     }
   };
@@ -275,7 +286,7 @@
           window.location.reload(false);
         });
       }
-      else if(that.isSomethingSaved) {
+      else if(that.isSomethingChanged) {
         window.location.reload(false);
       }
       that.modalElm[1].innerHTML = '';
@@ -315,7 +326,7 @@
         }
       });
       elm.parentNode.previousSibling.addEventListener('change', function() {
-        that.isSomethingSaved = !that.settingsData.has(this.value);
+        that.isSomethingChanged = !that.settingsData.has(this.value);
       });
     });
 
@@ -326,7 +337,18 @@
         that.settingsData.delete(name);
         localStorage.setItem('settingsData', JSON.stringify([...that.settingsData]));
         this.parentNode.parentNode.remove();
-        window.location.reload(false);
+        that.isSomethingChanged = true;
+        if(that.settingsData.size) {
+          let temporaryName = '';
+          that.settingsData.forEach((value) => {
+            temporaryName = value.settingsName;
+            return;
+          });
+          localStorage.setItem('currentSettingsName', temporaryName);  
+        }
+        else {
+          window.location.reload(false);
+        }
       });
     });
 

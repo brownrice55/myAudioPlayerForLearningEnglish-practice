@@ -15,7 +15,12 @@
         <div class="js-editArea"><button>設定名を編集</button></div>
       </dt>
       <dd>
-        <select></select>
+        <div class="js-settingsNameArea">
+          <select></select>
+        </div>
+        <div class="js-settingsNameArea">
+          <input type="text" value="設定１">
+        </div>
       </dd>
       <dt class="settings__type">
         <input class="js-inputRadio" type="radio" name="type" id="radio1_1" value="1">
@@ -76,8 +81,12 @@
     </dl>
   </div>
   <div class="js-save btnArea">
-    <button>名前をつけて保存する</button>
-    <button>上書き保存する</button>
+    <div class="btnArea__cont">
+      <button>名前をつけて保存する</button>
+    </div>
+    <div class="btnArea__cont">
+      <button>上書き保存する</button>
+    </div>
   </div>
   <div class="btnArea">
     <button class="js-btn">上記の設定で再生する</button>
