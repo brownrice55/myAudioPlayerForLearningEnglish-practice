@@ -57,6 +57,8 @@
     this.isSomethingChanged = false;
     this.isInitial = (!this.settingsData.size) ? true : false;
     this.showAndHideNameSetting();
+
+    this.isFirst = true;
   };
 
   AudioPlayer.prototype.setSettings = function() {
@@ -236,18 +238,23 @@
       this.btnElm.innerHTML = '設定を表示する';
       this.isSettingsOpen = !this.isSettingsOpen;
 
+      if(!this.isFirst) {
+        this.videoElm.pause();
+        this.videoElm.querySelector('source').src = '';
+      }
       this.videoElm.parentNode.className = '';
       let num = (this.numType===1) ? this.num: this.numArray[0];
       this.showElm.innerHTML = this.getShowElm(num);
       this.setPath(num);
-      this.videoElm.load();
-      this.videoPlayRateControllerSet();
+      this.videoPlayControllerSet();
     }
     else {//prepare Settings
       this.settingsElm.classList.remove('disp--none');
       this.saveAreaElm.classList.remove('disp--none');
       this.btnElm.innerHTML = '上記の設定で再生する';
       this.isSettingsOpen = !this.isSettingsOpen;
+      this.videoElm.pause();
+      this.videoElm.querySelector('source').src = '';
     }
   };
 
@@ -354,16 +361,22 @@
 
     let modalCloseElm = document.querySelector('.js-modalClose');
     this.closeModal(modalCloseElm,false);
+  };
+
+  AudioPlayer.prototype.videoPlayControllerSet = function() {
+    if(this.isFirst) {
+      this.videoElm.addEventListener('loadeddata', this.videoPlayControllerFirstTime.bind(this));
+      this.videoElm.addEventListener('ended', this.videoPlayController.bind(this));
+    }
+    else {
+      this.videoElm.play();
+    }
 
   };
 
-  AudioPlayer.prototype.videoPlayRateControllerSet = function() {
-    this.videoElm.addEventListener('loadeddata', this.videoPlayRateControllerFirstTime.bind(this));
-    this.videoElm.addEventListener('ended', this.videoPlayRateController.bind(this));
-  };
-
-  AudioPlayer.prototype.videoPlayRateControllerFirstTime = function() {
+  AudioPlayer.prototype.videoPlayControllerFirstTime = function() {
     this.videoElm.playbackRate = this.speed;
+    this.isFirst = false;
   };
 
   AudioPlayer.prototype.setTimer = function() {
@@ -372,55 +385,45 @@
     }, this.timer*1000);
   };
 
-  AudioPlayer.prototype.videoPlayRateController = function() {
+  AudioPlayer.prototype.videoPlayController = function() {
     if(this.numType===1) {
-      if(this.num>=this.endNum) {
-        videoElm.pause();
-      }
-      else {
-        if(this.cnt>=this.repetition-1) {
-          ++this.num;
-          this.speed = this.speedInit;
-          this.setPath(this.num);
-          this.cnt = 0;
-        }
-        else {
-          ++this.cnt;
-          this.speed = this.speedInit + this.cnt*this.acceleration;
-          this.videoElm.playbackRate = this.speed;
-        }
-        this.showElm.innerHTML = this.getShowElm(this.num);
-        if(this.isCheckedIndexArray[1]) {
-          this.setTimer();
-        }
-        else {
-          this.videoElm.load();
-        }
-      }
+      this.tempNum = this.num;
+      this.tempEndNum = this.endNum;
+      this.tempNo = this.num;
     }
     else {
-      if(this.arrayIndex>=(this.numArray.length)) {
-        videoElm.pause();
+      this.tempNum  = this.arrayIndex;
+      this.tempEndNum = this.numArray.length;
+      this.tempNo = this.numArray[this.arrayIndex];
+    }
+    if(this.tempNum>=this.tempEndNum) {
+      videoElm.pause();
+    }
+    else {
+      if(this.cnt>=this.repetition-1) {
+        if(this.numType===1) {
+          ++this.num;
+          this.tempNo = this.num;
+        }
+        else {
+          ++this.arrayIndex; 
+          this.tempNo = this.numArray[this.arrayIndex];
+        }
+        this.speed = this.speedInit;
+        this.setPath(this.tempNo);
+        this.cnt = 0;
       }
       else {
-        if(this.cnt>=this.repetition-1) {
-          ++this.arrayIndex;
-          this.speed = this.speedInit;
-          this.setPath(this.numArray[this.arrayIndex]);
-          this.cnt = 0;
-        }
-        else {
-          ++this.cnt;
-          this.speed = this.speedInit + this.cnt*this.acceleration;
-          this.videoElm.playbackRate = this.speed;
-        }
-        this.showElm.innerHTML = this.getShowElm(this.numArray[this.arrayIndex]);
-        if(this.isCheckedIndexArray[1]) {
-          this.setTimer();
-        }
-        else {
-          this.videoElm.load();
-        }
+        ++this.cnt;
+        this.speed = this.speedInit + this.cnt*this.acceleration;
+        this.videoElm.playbackRate = this.speed;
+      }
+      this.showElm.innerHTML = this.getShowElm(this.tempNo);
+      if(this.isCheckedIndexArray[1]) {
+        this.setTimer();
+      }
+      else {
+        this.videoElm.load();
       }
     }
   };
