@@ -79,6 +79,8 @@
     this.endNum = 1000;
     this.cnt = 0;
     this.arrayIndex = 0;
+    this.currentSettingsDataArray = [this.currentSettingsData.no,this.currentSettingsData.repetition,this.currentSettingsData.speed,this.acceleration,this.digit,this.timer,this.currentSettingsData.array,this.currentSettingsData.path,this.currentSettingsData.filename1,this.currentSettingsData.filename2,this.currentSettingsData.isCheckedIndexArray];
+    this.changeTempArray = [];
   };
 
   AudioPlayer.prototype.setCurrentSettings = function() {
@@ -129,6 +131,9 @@
       if(this.isCheckedIndexArray[cnt]) {
         this.option[cnt].classList.remove('disp--none');
       }
+      else {
+        this.option[cnt].classList.add('disp--none');
+      }
     }
     this.setDisplayNone();
   };
@@ -168,25 +173,25 @@
       this.saveBtnAreaDivElm[0].classList.remove('disp--none');
       this.saveBtnAreaDivElm[1].classList.add('disp--none');
 
-      let currentSettingsDataArray = [this.currentSettingsData.no,this.currentSettingsData.repetition,this.currentSettingsData.speed,this.acceleration,this.digit,this.timer,this.currentSettingsData.array,this.currentSettingsData.path,this.currentSettingsData.filename1,this.currentSettingsData.filename2,this.currentSettingsData.isCheckedIndexArray];
-      let changeTempArray = [];
+      this.settingsSelectNameElm.addEventListener('change', this.changeSettings.bind(this));
       let that = this;
+
       for(let cnt=1;cnt<7;++cnt) {
         this.settingsSelectElm[cnt].addEventListener('change', function() {
-          changeTempArray[cnt] = that.compareValue(changeTempArray, cnt, -1, this.value, currentSettingsDataArray);
-          that.onOffSaveButton(changeTempArray.includes(false));
+          that.changeTempArray[cnt] = that.compareValue(that.changeTempArray, cnt, -1, this.value, that.currentSettingsDataArray);
+          that.onOffSaveButton(that.changeTempArray.includes(false));
         });
       }
       for(let cnt=0;cnt<4;++cnt) {
         this.settingsTextElm[cnt].addEventListener('keyup', function() {
-          changeTempArray[(cnt+5)] = that.compareValue(changeTempArray, cnt, 5, this.value, currentSettingsDataArray);
-          that.onOffSaveButton(changeTempArray.includes(false));
+          that.changeTempArray[(cnt+5)] = that.compareValue(that.changeTempArray, cnt, 5, this.value, that.currentSettingsDataArray);
+          that.onOffSaveButton(that.changeTempArray.includes(false));
         });
       }
       for(let cnt=0;cnt<3;++cnt) {
         this.settingsCheckboxElm[cnt].addEventListener('click', function() {
-          changeTempArray[(cnt+10)] = that.compareValue(changeTempArray, cnt, 10, this.checked, currentSettingsDataArray);
-          that.onOffSaveButton(changeTempArray.includes(false));
+          that.changeTempArray[(cnt+10)] = that.compareValue(that.changeTempArray, cnt, 10, this.checked, that.currentSettingsDataArray);
+          that.onOffSaveButton(that.changeTempArray.includes(false));
         });
       }
     }
@@ -214,6 +219,9 @@
     let name = this.settingsSelectNameElm.value;
     this.currentSettingsData = this.settingsData.get(name);
     this.setCurrentSettings(this.currentSettingsData);
+    this.currentSettingsDataArray = [this.currentSettingsData.no,this.currentSettingsData.repetition,this.currentSettingsData.speed,this.acceleration,this.digit,this.timer,this.currentSettingsData.array,this.currentSettingsData.path,this.currentSettingsData.filename1,this.currentSettingsData.filename2,this.currentSettingsData.isCheckedIndexArray];
+    this.changeTempArray = [];
+    this.onOffSaveButton(false);
   };
 
   AudioPlayer.prototype.getShowElm = function(aNum) {
@@ -482,8 +490,14 @@
 
     this.settingsInputNumElm.addEventListener('keyup', this.setShowNum.bind(this));
     this.btnSaveElm.addEventListener('click', function() {
-      that.getNum();
-      that.saveSettings(that.currentSettingsName, that.num, that.numArray, that.numType, that.repetition, that.speedInit, that.acceleration,that.path, that.digit, that.fileName1, that.fileName2, that.settingsData, that.timer, that.isCheckedIndexArray);
+      let saveSettings = new Promise(function(resolve, reject) {
+        that.getNum();
+        that.saveSettings(that.currentSettingsName, that.num, that.numArray, that.numType, that.repetition, that.speedInit, that.acceleration,that.path, that.digit, that.fileName1, that.fileName2, that.settingsData, that.timer, that.isCheckedIndexArray);
+        resolve();
+      });
+      saveSettings.then(function(value) {
+        window.location.reload(false);
+      });
     });
     this.btnSaveAsElm.addEventListener('click', function() {
       that.modalElm[1].innerHTML = '<button class="js-modalClose modal__close">✖️</button><span>名前：</span> <input type="text" class="js-modalInput"><br><button class="js-modalSaveBtn modal__saveBtn">保存する</button>';
