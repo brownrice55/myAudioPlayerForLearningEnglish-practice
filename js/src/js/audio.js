@@ -59,6 +59,17 @@
     this.showAndHideNameSetting();
 
     this.isFirst = true;
+
+    this.historyData = new Map();
+    let historyData = localStorage.getItem('historyData');
+    if(historyData!=='undefined') {
+      const historyDataJson = JSON.parse(historyData);
+      this.historyData = new Map(historyDataJson);
+    }
+    this.historyArea = document.querySelector('.js-history');
+    this.historyAreaBtn = this.historyArea.querySelector('button');
+    this.historyListArea = this.historyArea.querySelector('ul');
+    this.isHistoryDisplayed = false;
   };
 
   AudioPlayer.prototype.setSettings = function() {
@@ -244,7 +255,7 @@
     let num = (this.numType===1) ? this.settingsSelectNumElm.value : numArray[0];
     if(this.isCheckedIndexArray[1]) {//checked
       this.digit = this.settingsSelectDigitElm.value;
-      this.showNumElm.innerHTML = this.getSerialNumber(num);
+      this.showNumElm.innerHTML = this.getSerialNumber(num, this.digit);
     }
     else {
       this.showNumElm.innerHTML = num;
@@ -296,22 +307,23 @@
       this.settingsElm.classList.remove('disp--none');
       this.saveAreaElm.classList.remove('disp--none');
       this.btnElm.innerHTML = '再生を再開する';
+      this.setHistory();
       this.isSettingsOpen = !this.isSettingsOpen;
       this.videoElm.pause();
       this.videoElm.querySelector('source').src = '';
     }
   };
 
-  AudioPlayer.prototype.getSerialNumber = function(aNum) {
+  AudioPlayer.prototype.getSerialNumber = function(aNum, aDigit) {
     let digitZero = '';
-    for(let cnt=0;cnt<this.digit;++cnt) {
+    for(let cnt=0;cnt<aDigit;++cnt) {
       digitZero += '0';
     }
-    return (digitZero + aNum).slice(-this.digit);
+    return (digitZero + aNum).slice(-aDigit);
   };
 
   AudioPlayer.prototype.setPath = function(aNum) {
-    let serialNumber = (this.isCheckedIndexArray[1]) ? this.getSerialNumber(aNum) : aNum;
+    let serialNumber = (this.isCheckedIndexArray[1]) ? this.getSerialNumber(aNum, this.digit) : aNum;
     let path = this.path + this.fileName1 + serialNumber + this.fileName2 + '.mp3';
     this.videoElm.innerHTML = '<source src="' + path + '" type="video/mp4">';
   };
@@ -407,10 +419,39 @@
     this.closeModal(modalCloseElm,false);
   };
 
+  AudioPlayer.prototype.setHistory = function() {
+    if(!this.historyData.size) {
+      this.historyArea.classList.add('disp--none');
+      return;
+    }
+    this.historyArea.classList.remove('disp--none');
+
+    let showData = '';
+    const returnValue = function(aValue) {
+      if(aValue){
+        return aValue;
+      }
+      return '';
+    };
+    this.historyData.forEach((value, index) => {
+      let no = (value.settings.type===1) ? '開始番号：' + value.settings.no : '指定番号' + value.settings.array;
+      let acceleration = (value.settings.isCheckedIndexArray[0]) ? '加速：' + value.settings.acceleration + '秒、' : '';
+      let serialNumber = (value.settings.isCheckedIndexArray[1]) ? this.getSerialNumber(value.num,value.settings.digit) : value.num;
+      let filePath = returnValue(value.settings.path) + returnValue(value.settings.fileName1) + serialNumber + returnValue(value.settings.fileName2) + '.mpg';
+      let timer = (value.settings.isCheckedIndexArray[2]) ? '、休止：' + value.settings.timer + '秒' : '';
+      showData += '<li>' + value.date + '（' + value.num + '番：' + value.cnt + '回目まで終了）' + '<br>設定名：' + value.settings.settingsName + '、' + no + '、繰り返し回数：' + value.settings.repetition + '回、開始スピード：' + value.settings.speed + '秒、' + acceleration + 'ファイルパス：' + filePath + timer + '<button>削除</button></li>';
+    });
+    this.historyListArea.innerHTML = showData;
+  };
+
   AudioPlayer.prototype.videoPlayControllerSet = function() {
     if(this.isFirst) {
       this.videoElm.addEventListener('loadeddata', this.videoPlayControllerFirstTime.bind(this));
       this.videoElm.addEventListener('ended', this.videoPlayController.bind(this));
+
+      let now = new Date();
+      this.currentDate = now.getFullYear() + '/' + (now.getMonth()+1) + '/' + now.getDate();
+      this.currentMs = now.getTime();
     }
     else {
       this.videoElm.play();
@@ -468,6 +509,9 @@
       else {
         this.videoElm.load();
       }
+      let historyData = {date:this.currentDate, num:this.tempNo, cnt:this.cnt, settings:this.currentSettingsData};
+      this.historyData.set(this.currentMs, historyData);
+      localStorage.setItem('historyData', JSON.stringify([...this.historyData]));
     }
   };
 
@@ -475,6 +519,7 @@
     this.setOption();
     this.setValue();
     this.setShowNum();
+    this.setHistory();
     this.settingsSelectDigitElm.addEventListener('change', this.setShowNum.bind(this));
     this.settingsSelectNumElm.addEventListener('change', this.setShowNum.bind(this));
     this.settingsSelectNameElm.addEventListener('change', this.changeSettings.bind(this));
@@ -524,6 +569,18 @@
         that.showAndHideOptions(cnt);
       });
     }
+
+    this.historyAreaBtn.addEventListener('click', function() {
+      this.isHistoryDisplayed = !this.isHistoryDisplayed;
+      if(this.isHistoryDisplayed) {
+        that.historyListArea.classList.add('history--active');
+        this.innerHTML = '閉じる';
+      }
+      else {
+        that.historyListArea.classList.remove('history--active');
+        this.innerHTML = '履歴から再生';
+      }
+    });
   };
 
   AudioPlayer.prototype.run = function() {
