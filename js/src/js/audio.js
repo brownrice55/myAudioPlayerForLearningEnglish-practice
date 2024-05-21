@@ -474,6 +474,19 @@
         that.setHistorySettings(this);
       });
     }
+    let btnElm = this.historyListArea.querySelectorAll('li button');
+    for(let cnt=0,len=btnElm.length;cnt<len;++cnt) {
+      btnElm[cnt].addEventListener('click', function() {
+        let targetLiElm = this.parentNode;
+        that.historyData.delete(Math.trunc(targetLiElm.dataset.index));
+        targetLiElm.remove();
+        localStorage.setItem('historyData', JSON.stringify([...that.historyData]));
+        if(!that.historyData.size) {
+          that.historyArea.classList.add('disp--none');
+          return;
+        }
+      });
+    }
   };
 
   AudioPlayer.prototype.setHistorySettings = function(aThis) {
