@@ -68,8 +68,10 @@
     }
     this.historyArea = document.querySelector('.js-history');
     this.historyAreaBtn = this.historyArea.querySelector('button');
-    this.historyListArea = this.historyArea.querySelector('ul');
+    this.historyListArea = this.historyArea.querySelector('div');
     this.isHistoryDisplayed = false;
+    this.isHistoryMode = false;
+    this.modeArea = document.querySelector('.js-mode');
   };
 
   AudioPlayer.prototype.setSettings = function() {
@@ -110,7 +112,7 @@
 
   AudioPlayer.prototype.setOption = function() {
     this.settingsSelectNumElm.innerHTML = this.getOption(1,1050,1);
-    this.settingsSelectSpeedElm.innerHTML = this.getOption(0.55,10,0.05);
+    this.settingsSelectSpeedElm.innerHTML = this.getOption(0.55,10,0.01);
     this.settingsSelectAccelerationElm.innerHTML = this.getOption(0.01,0.1,0.01);
     this.settingsSelectRepeatElm.innerHTML = this.getOption(1,300,1);
     this.settingsSelectDigitElm.innerHTML = this.getOption(1,5,1);
@@ -126,19 +128,40 @@
   };
 
   AudioPlayer.prototype.setValue = function() {
-    this.settingsSelectNameElm.value = this.currentSettingsName;
-    this.settingsSelectNumElm.value = this.num;
-    this.settingsSelectRepeatElm.value = this.repetition;
-    this.settingsSelectSpeedElm.value = this.speedInit;
-    this.settingsSelectAccelerationElm.value = this.acceleration;
-    this.settingsInputNumElm.value = this.numArray;
-    this.settingsInputPathElm.value = this.path;
-    this.settingsSelectDigitElm.value = this.digit;
-    this.settingsInputFileName1Elm.value = this.fileName1;
-    this.settingsInputFileName2Elm.value = this.fileName2;
-    this.settingsSelectTimerElm.value = this.timer;
+    let settingsModeElm = this.settingsNameAreaElm[0].parentNode;
+    if(this.isHistoryMode) {
+      settingsModeElm.classList.add('disp--none');
+      settingsModeElm.previousElementSibling.classList.add('disp--none');
+      this.modeArea.innerHTML = '<span>現在：履歴モード</span><button>通常モード</button>';
+      let modeBtn = this.modeArea.querySelector('button');
+      modeBtn.addEventListener('click', function() {
+        window.location.reload(false);
+      });
+    }
+    else {
+      this.settingsSelectNameElm.parentNode.classList.remove('disp--none');
+      this.settingsSelectNameElm.value = this.currentSettingsName;
+    }
+    this.settingsSelectNumElm.value = (!this.isHistoryMode) ? this.num : this.currentHistoryData.num;
+    if(!this.isHistoryMode) {
+      this.settingsSelectRepeatElm.value = this.repetition;
+      this.settingsSelectSpeedElm.value = this.speedInit;
+    }
+    else {
+      this.currentSettingsData.repetition = this.currentHistoryData.settings.repetition - this.currentHistoryData.cnt;
+      this.settingsSelectRepeatElm.value = this.currentSettingsData.repetition;
+      this.currentSettingsData.speed = Math.trunc((this.currentHistoryData.settings.speed + this.currentHistoryData.cnt*this.currentHistoryData.settings.acceleration)*100)/100;
+      this.settingsSelectSpeedElm.value = this.currentSettingsData.speed;
+    }
+    this.settingsSelectAccelerationElm.value = (!this.isHistoryMode) ? this.acceleration : this.currentHistoryData.settings.acceleration;
+    this.settingsInputNumElm.value = (!this.isHistoryMode) ? this.numArray : this.currentHistoryData.settings.numArray;
+    this.settingsInputPathElm.value = (!this.isHistoryMode) ? this.path : this.returnValue(this.currentHistoryData.settings.path);
+    this.settingsSelectDigitElm.value = (!this.isHistoryMode) ? this.digit : this.currentHistoryData.settings.digit;
+    this.settingsInputFileName1Elm.value = (!this.isHistoryMode) ? this.fileName1 : this.returnValue(this.currentHistoryData.settings.fileName1);
+    this.settingsInputFileName2Elm.value = (!this.isHistoryMode) ? this.fileName2 : this.returnValue(this.currentHistoryData.settings.fileName2);
+    this.settingsSelectTimerElm.value = (!this.isHistoryMode) ? this.timer : this.currentHistoryData.settings.timer;
     for(let cnt=0;cnt<3;++cnt) {
-      this.settingsCheckboxElm[cnt].checked = this.isCheckedIndexArray[cnt];
+      this.settingsCheckboxElm[cnt].checked = (!this.isHistoryMode) ? this.isCheckedIndexArray[cnt] : this.currentHistoryData.settings.isCheckedIndexArray[cnt];
       if(this.isCheckedIndexArray[cnt]) {
         this.option[cnt].classList.remove('disp--none');
       }
@@ -236,7 +259,7 @@
   };
 
   AudioPlayer.prototype.getShowElm = function(aNum) {
-    return '現在再生中の問題の番号：' + aNum + '<br>残り：' + (this.repetition-this.cnt) + '/' + this.repetition + '回<br>スピード：' + this.speed + '秒<br>加速：' + this.acceleration + '秒';
+    return '現在再生中の問題の番号：' + aNum + '<br>残り：' + (this.repetition-this.cnt) + '/' + this.repetition + '回<br>スピード：' + Math.trunc(this.speed*100)/100 + '秒<br>加速：' + this.acceleration + '秒';
   };
 
   AudioPlayer.prototype.saveSettings = function(aSettingsName, aNum, aNumArray, aNumType, aRepeat, aSpeedInit, aAcceleration, aPath, aDigit, aFileName1, aFileName2, aSettingsData, aTimer, aIsCheckedIndexArray) {
@@ -419,6 +442,13 @@
     this.closeModal(modalCloseElm,false);
   };
 
+  AudioPlayer.prototype.returnValue = function(aValue) {
+    if(aValue){
+      return aValue;
+    }
+    return '';
+  };
+
   AudioPlayer.prototype.setHistory = function() {
     if(!this.historyData.size) {
       this.historyArea.classList.add('disp--none');
@@ -427,21 +457,32 @@
     this.historyArea.classList.remove('disp--none');
 
     let showData = '';
-    const returnValue = function(aValue) {
-      if(aValue){
-        return aValue;
-      }
-      return '';
-    };
-    this.historyData.forEach((value, index) => {
-      let no = (value.settings.type===1) ? '開始番号：' + value.settings.no : '指定番号' + value.settings.array;
-      let acceleration = (value.settings.isCheckedIndexArray[0]) ? '加速：' + value.settings.acceleration + '秒、' : '';
-      let serialNumber = (value.settings.isCheckedIndexArray[1]) ? this.getSerialNumber(value.num,value.settings.digit) : value.num;
-      let filePath = returnValue(value.settings.path) + returnValue(value.settings.fileName1) + serialNumber + returnValue(value.settings.fileName2) + '.mpg';
-      let timer = (value.settings.isCheckedIndexArray[2]) ? '、休止：' + value.settings.timer + '秒' : '';
-      showData += '<li>' + value.date + '（' + value.num + '番：' + value.cnt + '回目まで終了）' + '<br>設定名：' + value.settings.settingsName + '、' + no + '、繰り返し回数：' + value.settings.repetition + '回、開始スピード：' + value.settings.speed + '秒、' + acceleration + 'ファイルパス：' + filePath + timer + '<button>削除</button></li>';
-    });
-    this.historyListArea.innerHTML = showData;
+    let historyData = [...this.historyData].sort().reverse();
+    for(let cnt=0,len=historyData.length;cnt<len;++cnt) {
+      let no = (historyData[cnt][1].settings.type===1) ? '開始番号：' + historyData[cnt][1].settings.no : '指定番号' + historyData[cnt][1].settings.array;
+      let acceleration = (historyData[cnt][1].settings.isCheckedIndexArray[0]) ? '加速：' + historyData[cnt][1].settings.acceleration + '秒、' : '';
+      let serialNumber = (historyData[cnt][1].settings.isCheckedIndexArray[1]) ? this.getSerialNumber(historyData[cnt][1].num,historyData[cnt][1].settings.digit) : historyData[cnt][1].num;
+      let filePath = this.returnValue(historyData[cnt][1].settings.path) + this.returnValue(historyData[cnt][1].settings.fileName1) + serialNumber + this.returnValue(historyData[cnt][1].settings.fileName2) + '.mpg';
+      let timer = (historyData[cnt][1].settings.isCheckedIndexArray[2]) ? '、休止：' + historyData[cnt][1].settings.timer + '秒' : '';
+      showData += '<li data-index="' + historyData[cnt][0] + '"><button>削除</button><span>' + historyData[cnt][1].date + '（' + historyData[cnt][1].num + '番：' + historyData[cnt][1].cnt + '回目まで終了）' + '<br>設定名：' + historyData[cnt][1].settings.settingsName + '、' + no + '、繰り返し回数：' + historyData[cnt][1].settings.repetition + '回、開始スピード：' + historyData[cnt][1].settings.speed + '秒、' + acceleration + 'ファイルパス：' + filePath + timer + '</span></li>';      
+    }
+    this.historyListArea.innerHTML = '<ul>' + showData + '</ul>';
+    let liElm = this.historyListArea.querySelectorAll('li span');
+    let that = this;
+    for(let cnt=0,len=liElm.length;cnt<len;++cnt) {
+      liElm[cnt].addEventListener('click', function() {
+        that.setHistorySettings(this);
+      });
+    }
+  };
+
+  AudioPlayer.prototype.setHistorySettings = function(aThis) {
+    this.historyListArea.classList.remove('nav__history--active');
+    this.historyAreaBtn.innerHTML = '履歴を表示';
+    this.isHistoryDisplayed = !this.isHistoryDisplayed;
+    this.isHistoryMode = true;
+    this.currentHistoryData = this.historyData.get(Math.trunc(aThis.parentNode.dataset.index));
+    this.setValue();
   };
 
   AudioPlayer.prototype.videoPlayControllerSet = function() {
@@ -571,14 +612,14 @@
     }
 
     this.historyAreaBtn.addEventListener('click', function() {
-      this.isHistoryDisplayed = !this.isHistoryDisplayed;
-      if(this.isHistoryDisplayed) {
-        that.historyListArea.classList.add('history--active');
+      that.isHistoryDisplayed = !that.isHistoryDisplayed;
+      if(that.isHistoryDisplayed) {
+        that.historyListArea.classList.add('nav__history--active');
         this.innerHTML = '閉じる';
       }
       else {
-        that.historyListArea.classList.remove('history--active');
-        this.innerHTML = '履歴から再生';
+        that.historyListArea.classList.remove('nav__history--active');
+        this.innerHTML = '履歴を表示';
       }
     });
   };
