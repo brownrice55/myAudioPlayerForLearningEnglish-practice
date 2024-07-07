@@ -88,7 +88,7 @@
     this.speedInit = this.currentSettingsData.speed || 1;
     this.showNumElm.innerHTML = this.num;
     this.timer = this.currentSettingsData.timer || 1;
-    this.isCheckedIndexArray = [...this.currentSettingsData.isCheckedIndexArray] || [false, false, false];
+    this.isCheckedIndexArray = (this.currentSettingsData) ? [...this.currentSettingsData.isCheckedIndexArray] : [false, false, false];
     this.endNum = 1000;
     this.cnt = 0;
     this.arrayIndex = 0;
@@ -139,7 +139,9 @@
       });
     }
     else {
-      this.settingsSelectNameElm.parentNode.classList.remove('disp--none');
+      if(this.currentSettingsData) {
+        this.settingsSelectNameElm.parentNode.classList.remove('disp--none');
+      }
       this.settingsSelectNameElm.value = this.currentSettingsName;
     }
     this.settingsSelectNumElm.value = (!this.isHistoryMode) ? this.num : this.currentHistoryData.num;
@@ -191,7 +193,7 @@
 
   AudioPlayer.prototype.onOffSaveButton = function(aIsFalseIncluded) {
     if(aIsFalseIncluded) {
-      this.saveBtnElm[1].innerHTML = '上書き保存する';
+      this.saveBtnElm[1].innerHTML = '上書き保存';
       this.saveBtnAreaDivElm[1].classList.remove('disp--none');
     }
     else {
@@ -234,7 +236,7 @@
       this.settingsNameAreaElm[0].classList.add('disp--none');
       this.settingsNameAreaElm[1].classList.remove('disp--none');
       this.saveBtnAreaDivElm[0].classList.add('disp--none');
-      this.saveBtnElm[1].innerHTML = '設定を保存する';
+      this.saveBtnElm[1].innerHTML = '設定を保存';
     }
   };
 
@@ -393,7 +395,8 @@
       elm.addEventListener('click', function() {
         if(this.parentNode.previousSibling.disabled) {
           this.parentNode.previousSibling.disabled = false;
-          this.innerHTML = '保存';
+          this.parentNode.previousSibling.select();
+          this.innerHTML = '<i class="bx bxs-save"></i>';
         }
         else {
           if(that.settingsData.has(this.value)) {//same name
@@ -404,7 +407,7 @@
           let newName = this.parentNode.previousSibling.value;
           localStorage.setItem('currentSettingsName', newName);
           this.parentNode.previousSibling.disabled = true;
-          this.innerHTML = '編集';
+          this.innerHTML = '<i class="bx bxs-edit"></i>';
           that.settingsData.delete(name);
           let data = { settingsName:newName, no:selectedData.num, array:selectedData.numArray, type:selectedData.numType, repetition:selectedData.repetition, speed:selectedData.speed, acceleration: selectedData.acceleration, path:selectedData.path, digit: selectedData.digit, filename1:selectedData.fileName1, filename2:selectedData.fileName2, timer:selectedData.timer, isCheckedIndexArray:selectedData.isCheckedIndexArray};
           that.settingsData.set(newName, data);
@@ -464,7 +467,7 @@
       let serialNumber = (historyData[cnt][1].settings.isCheckedIndexArray[1]) ? this.getSerialNumber(historyData[cnt][1].num,historyData[cnt][1].settings.digit) : historyData[cnt][1].num;
       let filePath = this.returnValue(historyData[cnt][1].settings.path) + this.returnValue(historyData[cnt][1].settings.fileName1) + serialNumber + this.returnValue(historyData[cnt][1].settings.fileName2) + '.mpg';
       let timer = (historyData[cnt][1].settings.isCheckedIndexArray[2]) ? '、休止：' + historyData[cnt][1].settings.timer + '秒' : '';
-      showData += '<li data-index="' + historyData[cnt][0] + '"><button>削除</button><span>' + historyData[cnt][1].date + '（' + historyData[cnt][1].num + '番：' + historyData[cnt][1].cnt + '回目まで終了）' + '<br>設定名：' + historyData[cnt][1].settings.settingsName + '、' + no + '、繰り返し回数：' + historyData[cnt][1].settings.repetition + '回、開始スピード：' + historyData[cnt][1].settings.speed + '秒、' + acceleration + 'ファイルパス：' + filePath + timer + '</span></li>';      
+      showData += '<li data-index="' + historyData[cnt][0] + '"><button><i class="bx bxs-trash"></i></button><span>' + historyData[cnt][1].date + '（' + historyData[cnt][1].num + '番：' + historyData[cnt][1].cnt + '回目まで終了）' + '<br>設定名：' + historyData[cnt][1].settings.settingsName + '、' + no + '、繰り返し回数：' + historyData[cnt][1].settings.repetition + '回、開始スピード：' + historyData[cnt][1].settings.speed + '秒、' + acceleration + 'ファイルパス：' + filePath + timer + '</span></li>';      
     }
     this.historyListArea.innerHTML = '<ul>' + showData + '</ul>';
     let liElm = this.historyListArea.querySelectorAll('li span');
@@ -491,7 +494,7 @@
 
   AudioPlayer.prototype.setHistorySettings = function(aThis) {
     this.historyListArea.classList.remove('nav__history--active');
-    this.historyAreaBtn.innerHTML = '履歴を表示';
+    this.historyAreaBtn.innerHTML = '<i class="bx bxs-layer"></i>';
     this.isHistoryDisplayed = !this.isHistoryDisplayed;
     this.isHistoryMode = true;
     this.currentHistoryData = this.historyData.get(Math.trunc(aThis.parentNode.dataset.index));
@@ -599,7 +602,7 @@
       });
     });
     this.btnSaveAsElm.addEventListener('click', function() {
-      that.modalElm[1].innerHTML = '<button class="js-modalClose modal__close">✖️</button><span>名前：</span> <input type="text" class="js-modalInput"><br><button class="js-modalSaveBtn modal__saveBtn">保存する</button>';
+      that.modalElm[1].innerHTML = '<button class="js-modalClose modal__close"><i class="bx bx-x"></i></button><span>設定名：</span> <input type="text" class="js-modalInput"><br><button class="js-modalSaveBtn modal__saveBtn"><i class="bx bxs-save"></i>保存</button>';
       for(let cnt=0;cnt<2;++cnt) {
         that.modalElm[cnt].classList.remove('disp--none');
       }
@@ -609,7 +612,7 @@
       let input = '';
       let cnt = 0;
       that.settingsData.forEach((value) => {
-        input += '<li><input type="text" data-index=' + cnt + ' value="' + value.settingsName + '" disabled><div class="modal__deleteEditBtnArea"><button class="js-editBtn" data-name=' + value.settingsName + '>編集</button><button class="js-deleteBtn" data-name=' + value.settingsName + '>削除</button></div></li>';
+        input += '<li><input type="text" data-index=' + cnt + ' value="' + value.settingsName + '" disabled><div class="modal__deleteEditBtnArea"><button class="js-editBtn" data-name=' + value.settingsName + '><i class="bx bxs-pencil"></i></button><button class="js-deleteBtn" data-name=' + value.settingsName + '><i class="bx bxs-trash"></i></button></div></li>';
         ++cnt;
       });
       that.modalElm[1].innerHTML = '<p>「編集」ボタンを押して編集した後に「保存」ボタンを押してください。</p><button class="js-modalClose modal__close">✖️</button><ul>' + input + '</ul>';
@@ -628,11 +631,11 @@
       that.isHistoryDisplayed = !that.isHistoryDisplayed;
       if(that.isHistoryDisplayed) {
         that.historyListArea.classList.add('nav__history--active');
-        this.innerHTML = '閉じる';
+        this.innerHTML = '<i class="bx bx-x"></i>';
       }
       else {
         that.historyListArea.classList.remove('nav__history--active');
-        this.innerHTML = '履歴を表示';
+        this.innerHTML = '<i class="bx bxs-layer"></i>';
       }
     });
   };
