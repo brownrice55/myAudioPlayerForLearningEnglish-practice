@@ -409,7 +409,7 @@
           this.parentNode.previousSibling.disabled = true;
           this.innerHTML = '<i class="bx bxs-edit"></i>';
           that.settingsData.delete(name);
-          let data = { settingsName:newName, no:selectedData.num, array:selectedData.numArray, type:selectedData.numType, repetition:selectedData.repetition, speed:selectedData.speed, acceleration: selectedData.acceleration, path:selectedData.path, digit: selectedData.digit, filename1:selectedData.fileName1, filename2:selectedData.fileName2, timer:selectedData.timer, isCheckedIndexArray:selectedData.isCheckedIndexArray};
+          let data = { settingsName:newName, no:selectedData.no, array:selectedData.array, type:selectedData.numType, repetition:selectedData.repetition, speed:selectedData.speed, acceleration: selectedData.acceleration, path:selectedData.path, digit: selectedData.digit, filename1:selectedData.fileName1, filename2:selectedData.fileName2, timer:selectedData.timer, isCheckedIndexArray:selectedData.isCheckedIndexArray};
           that.settingsData.set(newName, data);
           localStorage.setItem('settingsData', JSON.stringify([...that.settingsData]));
         }
