@@ -76,7 +76,7 @@
 
   AudioPlayer.prototype.setSettings = function() {
     this.currentSettingsData = this.settingsData.get(this.currentSettingsName) || '';
-    this.path = this.currentSettingsData.path || '';
+    this.folderName = this.currentSettingsData.folderName || '';
     this.digit = this.currentSettingsData.digit || 2;
     this.fileName1 = this.currentSettingsData.filename1 || '';
     this.fileName2 = this.currentSettingsData.filename2 || '';
@@ -92,7 +92,7 @@
     this.endNum = 1000;
     this.cnt = 0;
     this.arrayIndex = 0;
-    this.currentSettingsDataArray = [this.currentSettingsData.no,this.currentSettingsData.repetition,this.currentSettingsData.speed,this.acceleration,this.digit,this.timer,this.currentSettingsData.array,this.currentSettingsData.path,this.currentSettingsData.filename1,this.currentSettingsData.filename2,this.currentSettingsData.isCheckedIndexArray];
+    this.currentSettingsDataArray = [this.currentSettingsData.no,this.currentSettingsData.repetition,this.currentSettingsData.speed,this.acceleration,this.digit,this.timer,this.currentSettingsData.array,this.currentSettingsData.folderName,this.currentSettingsData.filename1,this.currentSettingsData.filename2,this.currentSettingsData.isCheckedIndexArray];
     this.changeTempArray = [];
   };
 
@@ -157,7 +157,7 @@
     }
     this.settingsSelectAccelerationElm.value = (!this.isHistoryMode) ? this.acceleration : this.currentHistoryData.settings.acceleration;
     this.settingsInputNumElm.value = (!this.isHistoryMode) ? this.numArray : this.currentHistoryData.settings.numArray;
-    this.settingsInputPathElm.value = (!this.isHistoryMode) ? this.path : this.returnValue(this.currentHistoryData.settings.path);
+    this.settingsInputPathElm.value = (!this.isHistoryMode) ? this.folderName : this.returnValue(this.currentHistoryData.settings.folderName);
     this.settingsSelectDigitElm.value = (!this.isHistoryMode) ? this.digit : this.currentHistoryData.settings.digit;
     this.settingsInputFileName1Elm.value = (!this.isHistoryMode) ? this.fileName1 : this.returnValue(this.currentHistoryData.settings.fileName1);
     this.settingsInputFileName2Elm.value = (!this.isHistoryMode) ? this.fileName2 : this.returnValue(this.currentHistoryData.settings.fileName2);
@@ -255,7 +255,7 @@
     let name = this.settingsSelectNameElm.value;
     this.currentSettingsData = this.settingsData.get(name);
     this.setCurrentSettings(this.currentSettingsData);
-    this.currentSettingsDataArray = [this.currentSettingsData.no,this.currentSettingsData.repetition,this.currentSettingsData.speed,this.acceleration,this.digit,this.timer,this.currentSettingsData.array,this.currentSettingsData.path,this.currentSettingsData.filename1,this.currentSettingsData.filename2,this.currentSettingsData.isCheckedIndexArray];
+    this.currentSettingsDataArray = [this.currentSettingsData.no,this.currentSettingsData.repetition,this.currentSettingsData.speed,this.acceleration,this.digit,this.timer,this.currentSettingsData.array,this.currentSettingsData.folderName,this.currentSettingsData.filename1,this.currentSettingsData.filename2,this.currentSettingsData.isCheckedIndexArray];
     this.changeTempArray = [];
     this.onOffSaveButton(false);
   };
@@ -264,8 +264,8 @@
     return '現在再生中の問題の番号：' + aNum + '<br>残り：' + (this.repetition-this.cnt) + '/' + this.repetition + '回<br>スピード：' + Math.trunc(this.speed*100)/100 + '秒<br>加速：' + this.acceleration + '秒';
   };
 
-  AudioPlayer.prototype.saveSettings = function(aSettingsName, aNum, aNumArray, aNumType, aRepeat, aSpeedInit, aAcceleration, aPath, aDigit, aFileName1, aFileName2, aSettingsData, aTimer, aIsCheckedIndexArray) {
-    let data = { settingsName:aSettingsName, no:aNum, array:aNumArray, type:aNumType, repetition:aRepeat, speed:aSpeedInit, acceleration: aAcceleration, path:aPath, digit: aDigit, filename1:aFileName1, filename2:aFileName2, timer:aTimer, isCheckedIndexArray:aIsCheckedIndexArray};
+  AudioPlayer.prototype.saveSettings = function(aSettingsName, aNum, aNumArray, aNumType, aRepeat, aSpeedInit, aAcceleration, aFolderName, aDigit, aFileName1, aFileName2, aSettingsData, aTimer, aIsCheckedIndexArray) {
+    let data = { settingsName:aSettingsName, no:aNum, array:aNumArray, type:aNumType, repetition:aRepeat, speed:aSpeedInit, acceleration: aAcceleration, folderName:aFolderName, digit: aDigit, filename1:aFileName1, filename2:aFileName2, timer:aTimer, isCheckedIndexArray:aIsCheckedIndexArray};
     aSettingsData.set(aSettingsName, data);
     localStorage.setItem('settingsData', JSON.stringify([...aSettingsData]));
     localStorage.setItem('currentSettingsName', aSettingsName);
@@ -300,7 +300,7 @@
       this.speedInit = parseFloat(this.settingsSelectSpeedElm.value);
       this.speed = this.speedInit;
       this.acceleration = parseFloat(this.settingsSelectAccelerationElm.value);
-      this.path = this.settingsInputPathElm.value;
+      this.folderName = this.settingsInputPathElm.value;
       this.digit = parseFloat(this.settingsSelectDigitElm.value);
       this.fileName1 = this.settingsInputFileName1Elm.value;
       this.fileName2 = this.settingsInputFileName2Elm.value;
@@ -349,7 +349,8 @@
 
   AudioPlayer.prototype.setPath = function(aNum) {
     let serialNumber = (this.isCheckedIndexArray[1]) ? this.getSerialNumber(aNum, this.digit) : aNum;
-    let path = this.path + this.fileName1 + serialNumber + this.fileName2 + '.mp3';
+    let slash = (this.folderName) ? '/' : '';
+    let path = 'data/' + this.folderName + slash + this.fileName1 + serialNumber + this.fileName2 + '.mp3';
     this.videoElm.innerHTML = '<source src="' + path + '" type="video/mp4">';
   };
 
@@ -367,7 +368,7 @@
         }
         that.getNum();
         let saveSettings = new Promise(function(resolve, reject) {
-          that.saveSettings(modalInputElm.value, that.num, that.numArray, that.numType, that.repetition, that.speedInit, that.acceleration, that.path, that.digit, that.fileName1, that.fileName2, that.settingsData, that.timer, that.isCheckedIndexArray);
+          that.saveSettings(modalInputElm.value, that.num, that.numArray, that.numType, that.repetition, that.speedInit, that.acceleration, that.folderName, that.digit, that.fileName1, that.fileName2, that.settingsData, that.timer, that.isCheckedIndexArray);
           resolve();
         });
         saveSettings.then(function(value) {
@@ -409,7 +410,7 @@
           this.parentNode.previousSibling.disabled = true;
           this.innerHTML = '<i class="bx bxs-edit"></i>';
           that.settingsData.delete(name);
-          let data = { settingsName:newName, no:selectedData.no, array:selectedData.array, type:selectedData.numType, repetition:selectedData.repetition, speed:selectedData.speed, acceleration: selectedData.acceleration, path:selectedData.path, digit: selectedData.digit, filename1:selectedData.fileName1, filename2:selectedData.fileName2, timer:selectedData.timer, isCheckedIndexArray:selectedData.isCheckedIndexArray};
+          let data = { settingsName:newName, no:selectedData.no, array:selectedData.array, type:selectedData.numType, repetition:selectedData.repetition, speed:selectedData.speed, acceleration: selectedData.acceleration, folderName:selectedData.folderName, digit: selectedData.digit, filename1:selectedData.fileName1, filename2:selectedData.fileName2, timer:selectedData.timer, isCheckedIndexArray:selectedData.isCheckedIndexArray};
           that.settingsData.set(newName, data);
           localStorage.setItem('settingsData', JSON.stringify([...that.settingsData]));
         }
@@ -465,7 +466,7 @@
       let no = (historyData[cnt][1].settings.type===1) ? '開始番号：' + historyData[cnt][1].settings.no : '指定番号' + historyData[cnt][1].settings.array;
       let acceleration = (historyData[cnt][1].settings.isCheckedIndexArray[0]) ? '加速：' + historyData[cnt][1].settings.acceleration + '秒、' : '';
       let serialNumber = (historyData[cnt][1].settings.isCheckedIndexArray[1]) ? this.getSerialNumber(historyData[cnt][1].num,historyData[cnt][1].settings.digit) : historyData[cnt][1].num;
-      let filePath = this.returnValue(historyData[cnt][1].settings.path) + this.returnValue(historyData[cnt][1].settings.fileName1) + serialNumber + this.returnValue(historyData[cnt][1].settings.fileName2) + '.mpg';
+      let filePath = this.returnValue(historyData[cnt][1].settings.folderName) + this.returnValue(historyData[cnt][1].settings.fileName1) + serialNumber + this.returnValue(historyData[cnt][1].settings.fileName2) + '.mp3';
       let timer = (historyData[cnt][1].settings.isCheckedIndexArray[2]) ? '、休止：' + historyData[cnt][1].settings.timer + '秒' : '';
       showData += '<li data-index="' + historyData[cnt][0] + '"><button><i class="bx bxs-trash"></i></button><span>' + historyData[cnt][1].date + '（' + historyData[cnt][1].num + '番：' + historyData[cnt][1].cnt + '回目まで終了）' + '<br>設定名：' + historyData[cnt][1].settings.settingsName + '、' + no + '、繰り返し回数：' + historyData[cnt][1].settings.repetition + '回、開始スピード：' + historyData[cnt][1].settings.speed + '秒、' + acceleration + 'ファイルパス：' + filePath + timer + '</span></li>';      
     }
@@ -594,7 +595,7 @@
     this.btnSaveElm.addEventListener('click', function() {
       let saveSettings = new Promise(function(resolve, reject) {
         that.getNum();
-        that.saveSettings(that.currentSettingsName, that.num, that.numArray, that.numType, that.repetition, that.speedInit, that.acceleration,that.path, that.digit, that.fileName1, that.fileName2, that.settingsData, that.timer, that.isCheckedIndexArray);
+        that.saveSettings(that.currentSettingsName, that.num, that.numArray, that.numType, that.repetition, that.speedInit, that.acceleration,that.folderName, that.digit, that.fileName1, that.fileName2, that.settingsData, that.timer, that.isCheckedIndexArray);
         resolve();
       });
       saveSettings.then(function(value) {

@@ -25,3 +25,13 @@ Could you please let me know if there are any errors in my English or code?</p>
 
 <p>I plan to improve the simple program I created before.</p>
 <p>以前作った簡単なプログラムをブラッシュアップしていきます。</p>
+
+## reset css
+<ul>
+  <li>https://github.com/nicolas-cusan/destyle.css</li>
+</ul>
+
+## icons
+<ul>
+  <li>https://boxicons.com/</li>
+</ul>

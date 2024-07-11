@@ -1,5 +1,4 @@
 js/node_modules
-js/data
 js/package-lock.json
 js/package.json
 js/gulpfile.js
